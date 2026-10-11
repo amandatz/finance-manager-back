@@ -9,11 +9,18 @@ public sealed class FinancialAccount : Entity
     {
     }
 
+    public const int NameMaxLength = 100;
+    public const int InstitutionNameMaxLength = 150;
+
     public FinancialAccount(
         string name,
         FinancialAccountType type,
         string? institutionName = null)
     {
+        ValidateName(name);
+        ValidateInstitutionName(institutionName);
+        ValidateType(type);
+
         Name = name;
         Type = type;
         InstitutionName = institutionName;
@@ -28,9 +35,48 @@ public sealed class FinancialAccount : Entity
         FinancialAccountType type,
         string? institutionName)
     {
+        ValidateName(name);
+        ValidateInstitutionName(institutionName);
+        ValidateType(type);
+
         Name = name;
         Type = type;
         InstitutionName = institutionName;
         MarkAsUpdated();
+    }
+
+    private static void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("Name is required.", nameof(name));
+        }
+
+        if (name.Length > NameMaxLength)
+        {
+            throw new ArgumentException(
+                $"Name must not exceed {NameMaxLength} characters.",
+                nameof(name));
+        }
+    }
+
+    private static void ValidateInstitutionName(string? institutionName)
+    {
+        if (institutionName is { Length: > InstitutionNameMaxLength })
+        {
+            throw new ArgumentException(
+                $"InstitutionName must not exceed {InstitutionNameMaxLength} characters.",
+                nameof(institutionName));
+        }
+    }
+
+    private static void ValidateType(FinancialAccountType type)
+    {
+        if (!Enum.IsDefined(type))
+        {
+            throw new ArgumentException(
+                "Type is not a valid FinancialAccountType.",
+                nameof(type));
+        }
     }
 }

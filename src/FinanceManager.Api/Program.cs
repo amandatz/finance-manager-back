@@ -1,16 +1,24 @@
-using FinanceManager.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using FinanceManager.Api;
+using FinanceManager.Application;
+using FinanceManager.Infrastructure;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile(
+    $"appsettings.{builder.Environment.EnvironmentName}.local.json",
+    optional: true,
+    reloadOnChange: true);
+
 builder.Services.AddOpenApi();
 
-builder.Services.AddDbContext<FinanceManagerDbContext>(options =>
-    options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddPresentation();
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -26,4 +34,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapControllers();
+
 app.Run();
+
+public partial class Program;
