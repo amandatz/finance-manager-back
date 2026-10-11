@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FinanceManager.Domain\FinanceManager.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FinanceManager.Application\FinanceManager.Application.csproj" />
   </ItemGroup>
 
 </Project>
