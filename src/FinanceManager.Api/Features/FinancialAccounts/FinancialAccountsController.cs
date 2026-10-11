@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FinanceManager.Api.Features.FinancialAccounts;
 
 [ApiController]
-[Route("api/financial-accounts")]
+[Route("api/v1/financial-accounts")]
 public sealed class FinancialAccountsController(FinancialAccountsService service) : ControllerBase
 {
     [HttpPost]
