@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FinanceManager.Application.Abstractions;
+using FinanceManager.Application.Users;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
 using FinanceManager.Domain.Enums;
@@ -11,24 +12,14 @@ namespace FinanceManager.Api.Features.Users;
 [ApiController]
 [Route("api/v1/users")]
 [Authorize]
-public sealed class UsersController(IIdentityService identityService) : ControllerBase
+public sealed class UsersController(UsersService usersService) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<ActionResult<CurrentUserResponse>> GetMe(CancellationToken cancellationToken)
     {
-        var profile = await identityService.GetUserAsync(GetUserId(), cancellationToken);
+        var profile = await usersService.GetCurrentUserAsync(GetUserId(), cancellationToken);
 
-        if (profile is null)
-        {
-            return Unauthorized();
-        }
-
-        return Ok(new CurrentUserResponse(
-            profile.Id,
-            profile.Name,
-            profile.Email,
-            profile.Role,
-            profile.HouseholdId));
+        return profile is null ? Unauthorized() : Ok(profile);
     }
 
     [HttpPost]
@@ -37,13 +28,7 @@ public sealed class UsersController(IIdentityService identityService) : Controll
         CreateMemberRequest request,
         CancellationToken cancellationToken)
     {
-        var result = await identityService.CreateUserAsync(
-            request.Name,
-            request.Email,
-            request.Password,
-            GetHouseholdId(),
-            HouseholdRole.Member,
-            cancellationToken);
+        var result = await usersService.CreateMemberAsync(request, GetHouseholdId(), cancellationToken);
 
         return result.Outcome switch
         {
@@ -64,11 +49,7 @@ public sealed class UsersController(IIdentityService identityService) : Controll
         ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var outcome = await identityService.ChangePasswordAsync(
-            GetUserId(),
-            request.CurrentPassword,
-            request.NewPassword,
-            cancellationToken);
+        var outcome = await usersService.ChangePasswordAsync(GetUserId(), request, cancellationToken);
 
         return outcome switch
         {
