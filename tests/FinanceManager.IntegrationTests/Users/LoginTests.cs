@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceManager.IntegrationTests.Users;
 
@@ -60,9 +61,16 @@ public class LoginTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Unauthorized, unknownEmailResponse.StatusCode);
 
-        var wrongPasswordBody = await wrongPasswordResponse.Content.ReadAsStringAsync();
-        var unknownEmailBody = await unknownEmailResponse.Content.ReadAsStringAsync();
-        Assert.Equal(wrongPasswordBody, unknownEmailBody);
+        // Compare the meaningful fields, not the raw body: ProblemDetails carries a
+        // per-request `traceId` correlation extension that legitimately differs on every
+        // request regardless of outcome - it is not part of "can't tell which one failed".
+        var wrongPasswordProblem = await wrongPasswordResponse.Content
+            .ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
+        var unknownEmailProblem = await unknownEmailResponse.Content
+            .ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
+
+        Assert.Equal(wrongPasswordProblem!.Status, unknownEmailProblem!.Status);
+        Assert.Equal(wrongPasswordProblem.Title, unknownEmailProblem.Title);
     }
 
     [Fact]

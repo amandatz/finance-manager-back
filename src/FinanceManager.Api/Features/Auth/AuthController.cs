@@ -23,11 +23,7 @@ public sealed class AuthController(
 
         if (authenticated is null)
         {
-            return Unauthorized(new ProblemDetails
-            {
-                Status = StatusCodes.Status401Unauthorized,
-                Title = "Invalid email or password.",
-            });
+            return Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password.");
         }
 
         var token = tokenGenerator.GenerateAccessToken(

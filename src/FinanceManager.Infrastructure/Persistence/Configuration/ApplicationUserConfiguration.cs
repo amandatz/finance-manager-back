@@ -1,3 +1,4 @@
+using FinanceManager.Application.Users;
 using FinanceManager.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -10,7 +11,7 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
     {
         builder.Property(x => x.Name)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(UserConstraints.NameMaxLength);
 
         builder.Property(x => x.HouseholdId)
             .IsRequired();

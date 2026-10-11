@@ -56,9 +56,5 @@ public sealed class FinancialAccountsController(FinancialAccountsService service
     }
 
     private ObjectResult NotFoundProblem() =>
-        NotFound(new ProblemDetails
-        {
-            Status = StatusCodes.Status404NotFound,
-            Title = "Financial account not found.",
-        });
+        Problem(statusCode: StatusCodes.Status404NotFound, title: "Financial account not found.");
 }

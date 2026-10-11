@@ -21,16 +21,6 @@ public sealed class Household : Entity
 
     private static void ValidateName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            throw new ArgumentException("Name is required.", nameof(name));
-        }
-
-        if (name.Length > NameMaxLength)
-        {
-            throw new ArgumentException(
-                $"Name must not exceed {NameMaxLength} characters.",
-                nameof(name));
-        }
+        Guard.AgainstEmptyOrTooLong(name, NameMaxLength, nameof(name));
     }
 }

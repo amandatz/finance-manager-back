@@ -7,11 +7,13 @@ public sealed class CreateMemberRequestValidator : AbstractValidator<CreateMembe
     public CreateMemberRequestValidator()
     {
         RuleFor(x => x.Name)
-            .NotEmpty();
+            .NotEmpty()
+            .MaximumLength(UserConstraints.NameMaxLength);
 
         RuleFor(x => x.Email)
             .NotEmpty()
-            .EmailAddress();
+            .EmailAddress()
+            .MaximumLength(UserConstraints.EmailMaxLength);
 
         RuleFor(x => x.Password)
             .NotEmpty();

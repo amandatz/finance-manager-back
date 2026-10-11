@@ -50,11 +50,9 @@ public sealed class UsersController(IIdentityService identityService) : Controll
             CreateUserOutcome.Success => StatusCode(
                 StatusCodes.Status201Created,
                 new CreatedUserResponse(result.UserId!.Value, request.Name, request.Email)),
-            CreateUserOutcome.EmailAlreadyInUse => Conflict(new ProblemDetails
-            {
-                Status = StatusCodes.Status409Conflict,
-                Title = "Email already in use.",
-            }),
+            CreateUserOutcome.EmailAlreadyInUse => Problem(
+                statusCode: StatusCodes.Status409Conflict,
+                title: "Email already in use."),
             CreateUserOutcome.PasswordPolicyViolation => BadRequest(new ValidationProblemDetails(
                 new Dictionary<string, string[]> { ["Password"] = [.. result.Errors] })),
             _ => Problem(),
@@ -75,16 +73,12 @@ public sealed class UsersController(IIdentityService identityService) : Controll
         return outcome switch
         {
             ChangePasswordOutcome.Success => NoContent(),
-            ChangePasswordOutcome.CurrentPasswordIncorrect => BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "The current password is incorrect.",
-            }),
-            ChangePasswordOutcome.NewPasswordPolicyViolation => BadRequest(new ProblemDetails
-            {
-                Status = StatusCodes.Status400BadRequest,
-                Title = "The new password does not meet the password policy.",
-            }),
+            ChangePasswordOutcome.CurrentPasswordIncorrect => Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "The current password is incorrect."),
+            ChangePasswordOutcome.NewPasswordPolicyViolation => Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "The new password does not meet the password policy."),
             _ => Problem(),
         };
     }

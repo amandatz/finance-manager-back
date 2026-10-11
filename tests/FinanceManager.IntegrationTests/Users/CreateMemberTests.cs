@@ -101,4 +101,20 @@ public class CreateMemberTests : IDisposable
         var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
         Assert.Contains("Password", problem!.Errors.Keys);
     }
+
+    [Fact]
+    public async Task CreateMember_WithNameOver100Chars_Returns400()
+    {
+        var client = _factory.CreateClient();
+        var ownerToken = await _factory.LoginAsOwnerAsync(client);
+        var ownerClient = _factory.CreateAuthenticatedClient(ownerToken);
+
+        var response = await ownerClient.PostAsJsonAsync(
+            Route,
+            new CreateMemberRequest(new string('a', 101), "longname@test.local", "SomePassword123"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
+        Assert.Contains("Name", problem!.Errors.Keys);
+    }
 }
