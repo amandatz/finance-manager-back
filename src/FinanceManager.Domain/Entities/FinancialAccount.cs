@@ -1,5 +1,6 @@
 ﻿using FinanceManager.Domain.Common;
 using FinanceManager.Domain.Enums;
+using FinanceManager.Domain.Exceptions;
 
 namespace FinanceManager.Domain.Entities;
 
@@ -54,7 +55,7 @@ public sealed class FinancialAccount : Entity
     {
         if (institutionName is { Length: > InstitutionNameMaxLength })
         {
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 $"InstitutionName must not exceed {InstitutionNameMaxLength} characters.",
                 nameof(institutionName));
         }
@@ -64,7 +65,7 @@ public sealed class FinancialAccount : Entity
     {
         if (!Enum.IsDefined(type))
         {
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 "Type is not a valid FinancialAccountType.",
                 nameof(type));
         }

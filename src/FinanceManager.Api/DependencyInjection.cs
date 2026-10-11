@@ -17,6 +17,12 @@ public static class DependencyInjection
         services.AddControllers(options => options.Filters.Add<ValidationFilter>());
 
         services.AddProblemDetails();
+
+        // Order matters: IExceptionHandler implementations are tried in registration
+        // order, and the first one whose TryHandleAsync returns true wins. Domain
+        // exceptions (expected, client-facing outcomes) are handled first; anything else
+        // falls through to GlobalExceptionHandler's generic 500.
+        services.AddExceptionHandler<DomainExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         services

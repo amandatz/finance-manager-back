@@ -40,6 +40,17 @@ public class GetByIdTests : IDisposable
     }
 
     [Fact]
+    public async Task GetById_WithUnknownId_IncludesTraceId()
+    {
+        var client = _factory.CreateClient();
+        var response = await client.GetAsync($"{Route}/{Guid.NewGuid()}");
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
+        Assert.True(problem!.Extensions.TryGetValue("traceId", out var traceId));
+        Assert.False(string.IsNullOrWhiteSpace(traceId?.ToString()));
+    }
+
+    [Fact]
     public async Task GetById_WithDeactivatedAccount_Returns404()
     {
         var account = new FinancialAccount("Checking", FinancialAccountType.Bank);

@@ -31,9 +31,9 @@ public sealed class FinancialAccountsController(FinancialAccountsService service
         Guid id,
         CancellationToken cancellationToken)
     {
-        var response = await service.GetByIdAsync(id, cancellationToken);
-
-        return response is null ? NotFoundProblem() : Ok(response);
+        // NotFoundException (thrown when the account doesn't exist or is inactive) is
+        // caught by DomainExceptionHandler and mapped to a 404 ProblemDetails response.
+        return Ok(await service.GetByIdAsync(id, cancellationToken));
     }
 
     [HttpPut("{id:guid}")]
@@ -42,19 +42,14 @@ public sealed class FinancialAccountsController(FinancialAccountsService service
         UpdateFinancialAccountRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await service.UpdateAsync(id, request, cancellationToken);
-
-        return response is null ? NotFoundProblem() : Ok(response);
+        return Ok(await service.UpdateAsync(id, request, cancellationToken));
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await service.DeleteAsync(id, cancellationToken);
+        await service.DeleteAsync(id, cancellationToken);
 
-        return deleted ? NoContent() : NotFoundProblem();
+        return NoContent();
     }
-
-    private ObjectResult NotFoundProblem() =>
-        Problem(statusCode: StatusCodes.Status404NotFound, title: "Financial account not found.");
 }

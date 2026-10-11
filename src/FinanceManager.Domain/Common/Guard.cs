@@ -1,3 +1,5 @@
+using FinanceManager.Domain.Exceptions;
+
 namespace FinanceManager.Domain.Common;
 
 internal static class Guard
@@ -6,12 +8,12 @@ internal static class Guard
     {
         if (string.IsNullOrWhiteSpace(value))
         {
-            throw new ArgumentException($"{Capitalize(paramName)} is required.", paramName);
+            throw new DomainValidationException($"{Capitalize(paramName)} is required.", paramName);
         }
 
         if (value.Length > maxLength)
         {
-            throw new ArgumentException(
+            throw new DomainValidationException(
                 $"{Capitalize(paramName)} must not exceed {maxLength} characters.",
                 paramName);
         }

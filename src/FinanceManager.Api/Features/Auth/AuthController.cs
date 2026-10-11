@@ -14,10 +14,8 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await authService.LoginAsync(request, cancellationToken);
-
-        return response is null
-            ? Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Invalid email or password.")
-            : Ok(response);
+        // AuthenticationFailedException (invalid email or password) is caught by
+        // DomainExceptionHandler and mapped to a 401 ProblemDetails response.
+        return Ok(await authService.LoginAsync(request, cancellationToken));
     }
 }

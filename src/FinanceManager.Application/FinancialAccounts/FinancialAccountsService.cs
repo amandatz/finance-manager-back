@@ -1,6 +1,7 @@
 using FinanceManager.Application.FinancialAccounts.Requests;
 using FinanceManager.Application.FinancialAccounts.Responses;
 using FinanceManager.Domain.Entities;
+using FinanceManager.Domain.Exceptions;
 using FinanceManager.Domain.Repositories;
 
 namespace FinanceManager.Application.FinancialAccounts;
@@ -31,26 +32,21 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
             .ToList();
     }
 
-    public async Task<FinancialAccountResponse?> GetByIdAsync(
+    public async Task<FinancialAccountResponse> GetByIdAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
-        var account = await repository.GetByIdAsync(id, cancellationToken);
+        var account = await GetActiveOrThrowAsync(id, cancellationToken);
 
-        return account is { IsActive: true } ? Map(account) : null;
+        return Map(account);
     }
 
-    public async Task<FinancialAccountResponse?> UpdateAsync(
+    public async Task<FinancialAccountResponse> UpdateAsync(
         Guid id,
         UpdateFinancialAccountRequest request,
         CancellationToken cancellationToken)
     {
-        var account = await repository.GetByIdAsync(id, cancellationToken);
-
-        if (account is not { IsActive: true })
-        {
-            return null;
-        }
+        var account = await GetActiveOrThrowAsync(id, cancellationToken);
 
         account.Update(request.Name, request.Type, request.InstitutionName);
         await repository.SaveChangesAsync(cancellationToken);
@@ -58,19 +54,19 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
         return Map(account);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
+    public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
-        var account = await repository.GetByIdAsync(id, cancellationToken);
-
-        if (account is not { IsActive: true })
-        {
-            return false;
-        }
+        var account = await GetActiveOrThrowAsync(id, cancellationToken);
 
         account.Deactivate();
         await repository.SaveChangesAsync(cancellationToken);
+    }
 
-        return true;
+    private async Task<FinancialAccount> GetActiveOrThrowAsync(Guid id, CancellationToken cancellationToken)
+    {
+        var account = await repository.GetByIdAsync(id, cancellationToken);
+
+        return account is { IsActive: true } ? account : throw NotFoundException.For(nameof(FinancialAccount), id);
     }
 
     private static FinancialAccountResponse Map(FinancialAccount account) =>

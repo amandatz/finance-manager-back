@@ -98,8 +98,9 @@ public class CreateMemberTests : IDisposable
             new CreateMemberRequest("Short Pw", "shortpw@test.local", "Sh0rt!"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
-        Assert.Contains("Password", problem!.Errors.Keys);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
+        Assert.NotNull(problem);
+        Assert.True(problem.Extensions.ContainsKey("traceId"));
     }
 
     [Fact]

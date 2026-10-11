@@ -2,6 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using FinanceManager.Application.Users.Responses;
 using FinanceManager.Domain.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceManager.IntegrationTests.Users;
 
@@ -47,5 +49,22 @@ public class CurrentUserTests : IDisposable
         var response = await client.GetAsync(Route);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetMe_WhenUserNoLongerExists_Returns401WithProblemDetails()
+    {
+        using var factory = new UserGoneUserHouseholdApiFactory();
+        var client = factory.CreateClient();
+        var token = await factory.LoginAsOwnerAsync(client);
+        var authedClient = factory.CreateAuthenticatedClient(token);
+
+        var response = await authedClient.GetAsync(Route);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
+        Assert.NotNull(problem);
+        Assert.Equal(StatusCodes.Status401Unauthorized, problem!.Status);
+        Assert.True(problem.Extensions.ContainsKey("traceId"));
     }
 }
