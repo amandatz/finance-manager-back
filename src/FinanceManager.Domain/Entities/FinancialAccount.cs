@@ -25,9 +25,11 @@ public sealed class FinancialAccount : Entity
 
     public void Update(
         string name,
+        FinancialAccountType type,
         string? institutionName)
     {
         Name = name;
+        Type = type;
         InstitutionName = institutionName;
         MarkAsUpdated();
     }

@@ -1,6 +1,5 @@
-﻿namespace FinanceManager.Api.Features.FinancialAccounts
+﻿namespace FinanceManager.Api.Features.FinancialAccounts;
+
+public class FinancialAccountsController
 {
-    public class FinancialAccountsController
-    {
-    }
 }
