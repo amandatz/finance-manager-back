@@ -37,36 +37,3 @@ public interface IIdentityService
         HouseholdRole role,
         CancellationToken cancellationToken);
 }
-
-public enum CreateUserOutcome
-{
-    Success,
-    EmailAlreadyInUse,
-    PasswordPolicyViolation,
-}
-
-public sealed record CreateUserResult(
-    CreateUserOutcome Outcome,
-    Guid? UserId,
-    IReadOnlyList<string> Errors);
-
-public sealed record AuthenticatedUser(Guid UserId, Guid HouseholdId, HouseholdRole Role);
-
-public sealed record UserProfile(Guid Id, string Name, string Email, HouseholdRole Role, Guid HouseholdId);
-
-public sealed record HouseholdMembershipInfo(Guid HouseholdId, string HouseholdName, HouseholdRole Role, DateTime CreatedAt);
-
-public enum ChangePasswordOutcome
-{
-    Success,
-    CurrentPasswordIncorrect,
-    NewPasswordPolicyViolation,
-}
-
-public enum AddMembershipOutcome
-{
-    Success,
-    AlreadyMember,
-}
-
-public sealed record AddMembershipResult(AddMembershipOutcome Outcome);

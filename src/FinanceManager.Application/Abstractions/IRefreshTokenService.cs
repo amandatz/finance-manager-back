@@ -23,5 +23,3 @@ public interface IRefreshTokenService
     /// </summary>
     Task RevokeAsync(string refreshToken, CancellationToken cancellationToken);
 }
-
-public sealed record TokenPair(string AccessToken, string RefreshToken);
