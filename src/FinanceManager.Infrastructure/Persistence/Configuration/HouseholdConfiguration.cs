@@ -15,5 +15,11 @@ internal sealed class HouseholdConfiguration : IEntityTypeConfiguration<Househol
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(Household.NameMaxLength);
+
+        builder.Property(x => x.InviteCode)
+            .HasMaxLength(Household.InviteCodeLength);
+
+        builder.HasIndex(x => x.InviteCode)
+            .IsUnique();
     }
 }

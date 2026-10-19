@@ -2,24 +2,29 @@
 
 **Status:** Draft
 **Owner:** Product/Engineering
-**Last updated:** 2026-10-11
-**Version:** 0.2
+**Last updated:** 2026-10-13
+**Version:** 0.4
 
 ---
 
 ## 1. Overview
 
-Finance Manager is a personal finance platform for a household that lets each
+Finance Manager is a personal finance platform for households that lets each
 member consolidate their money across every account they hold —
 bank accounts, brokerages, benefits cards, and cash — record what they earn and
 spend, organize it into categories and budgets, and understand where the
 household's money goes over time.
 
-Each household member has their own login. Some accounts are personal and visible
-only to their owner; others are shared with the household (e.g. joint checking).
-One member holds the **owner** role for the household and can manage its structure
-(accounts, categories, budgets); other members have **member** role and can log
-transactions day to day. See §5 and §6.7 for the detailed model.
+Anyone can sign up. Registering creates a brand-new household with that person
+as its **Owner**; a second person joins that same household (as a **Member**)
+using an invite code the Owner generates, instead of creating their own. A
+person isn't limited to one household either — the same login can be Owner of
+their own household and a Member of someone else's (a partner's, a parent's),
+switching which one is "active" without logging in again. Some accounts are
+personal and visible only to their owner; others are shared with the household
+(e.g. joint checking). An Owner manages their household's structure (accounts,
+categories, budgets); Members log transactions day to day. See §5 and §6.7 for
+the detailed model.
 
 This document describes the product as a whole: who it is for, what problems it
 solves, the feature set, and the requirements that guide the backend currently
@@ -55,6 +60,8 @@ trustworthy ledger the user controls.
 
 ### 3.1 Goals
 
+- Let anyone **sign up and start a household** of their own, in control of their own data from the first click.
+- Let a second household member **join via an invite code**, without the Owner typing their credentials for them.
 - Give each household member **one consolidated view** of their own and shared accounts and balances.
 - Let household members **record income and expenses** quickly and reliably.
 - Let the household **categorize and budget** so spending is intentional, not accidental.
@@ -64,7 +71,7 @@ trustworthy ledger the user controls.
 ### 3.2 Non-goals (for now)
 
 - Automatic bank sync / Open Finance aggregation. Entry is manual in v1.
-- Support for multiple unrelated households/tenants. v1 is built for a single household; multi-tenant sign-up is not a goal.
+- Email-based invites, password reset, or any flow requiring sending email. Joining a household is done entirely via invite code, copy/pasted or shared by the Owner through any channel they like — the backend never sends email.
 - Tax filing, invoicing, or full accounting (double-entry ledger, depreciation, etc.).
 - Native mobile apps. The backend serves an API; clients come later.
 - Investment performance analytics (returns, allocation). Brokerages are tracked
@@ -80,10 +87,9 @@ trustworthy ledger the user controls.
 | **The household member** | Logs their own income/expenses and sees shared accounts, but doesn't restructure the household. | Fast, reliable entry |
 | **The budgeter** | Has income/expense targets (personal or household) and wants to stay within them. | Budgets + alerts |
 
-Primary market: one household in Brazil managing personal finances together
-(currency, benefit cards, and institution types reflect this). Designed to
-generalize to other locales — and potentially other households — later, but v1
-is scoped to a single household.
+Primary market: households in Brazil managing personal finances together
+(currency, benefit cards, and institution types reflect this). Each household is
+independent and private from every other; the platform hosts many of them.
 
 ---
 
@@ -91,8 +97,10 @@ is scoped to a single household.
 
 | Concept | Meaning | Status |
 |---|---|---|
-| **Household** | The group everything belongs to. Has one or more Users. v1 has exactly one household. | Planned |
-| **User** | A person with their own login, belonging to the household with a role of `Owner` or `Member`. | Planned |
+| **Household** | A self-contained group of Users and their Financial Accounts. The platform hosts many, each fully private from every other. | Built, but currently only created via a one-time seed — self-registration (HH-6) is planned |
+| **User** | A person with their own login, who can belong to more than one household, each with its own independent role. One household is "active" for a session at a time. | Built (single-household); multi-household + active-session switching is planned |
+| **HouseholdMembership** | The link between a User and a Household, carrying that user's role (`Owner`/`Member`) *in that household specifically* — the same user can be `Owner` of one and `Member` of another. | Planned |
+| **HouseholdInvite** | A code an Owner generates that lets one person join that Owner's household as a Member — either by registering fresh, or (if already a user elsewhere) by redeeming it as an added membership. | Planned |
 | **Financial Account** | A place money is held: bank, brokerage, benefit, cash, other. Has a name, type, optional institution, an owning User, and a visibility (`Personal` or `Shared`). | In progress — ownership/visibility not yet modeled |
 | **Transaction** | A single money movement — income or expense — against an account, with amount, date, description, recorded by a User. | Planned |
 | **Category** | A label for transactions (e.g. Groceries, Salary, Rent), optionally hierarchical. Household-wide, not per-user. | Planned |
@@ -102,10 +110,11 @@ is scoped to a single household.
 
 Existing account types: `Bank`, `Brokerage`, `Benefit`, `Cash`, `Other`.
 
-**Visibility rule:** a `Personal` account is visible only to its owning User (and,
-per the owner role, possibly the household Owner — see open question in §11). A
-`Shared` account is visible to every User in the household, and any member can
-record transactions against it, subject to role permissions in §6.7.
+**Visibility rule:** a `Personal` account is visible to its owning User and to the
+household Owner. A `Shared` account is visible to every User in the household, and
+any member can record transactions against it, subject to role permissions in §6.7.
+Only the household Owner sees everything; a Member sees their own Personal accounts
+plus all Shared accounts, but not another Member's Personal accounts.
 
 ---
 
@@ -118,7 +127,7 @@ Requirements use **MoSCoW** priority: **Must**, **Should**, **Could**.
 | ID | Requirement | Priority |
 |---|---|---|
 | FA-1 | User can create an account with a name, type, optional institution name, and visibility (Personal/Shared). | Must |
-| FA-2 | User can view a list of accounts they can see: their own personal accounts plus all Shared household accounts. | Must |
+| FA-2 | User can view a list of accounts they can see: their own Personal accounts, all Shared household accounts, and — if they are the household Owner — every Member's Personal accounts too. | Must |
 | FA-3 | User can view a single account's details, if they can see it per FA-2. | Must |
 | FA-4 | Account Owner (the user who created it) or household Owner can update an account's name, type, institution, and visibility. | Must |
 | FA-5 | Account Owner or household Owner can delete (or archive) an account. | Must |
@@ -172,7 +181,7 @@ Requirements use **MoSCoW** priority: **Must**, **Should**, **Could**.
 | ID | Requirement | Priority |
 |---|---|---|
 | SEC-1 | A user authenticates before accessing any financial data. | Must |
-| SEC-2 | A user can only read their own Personal data and the household's Shared data (see §6.7 for role rules on writes). | Must |
+| SEC-2 | A user can only read their own Personal data and the household's Shared data; the household Owner can additionally read every Member's Personal data (see §6.7 for role rules on writes). | Must |
 | SEC-3 | Monetary amounts are stored with exact precision (no floating-point money). | Must |
 | SEC-4 | All amounts carry a currency; the user has a default currency. | Should |
 | SEC-5 | Sensitive data is protected in transit (HTTPS) and at rest. | Must |
@@ -181,13 +190,17 @@ Requirements use **MoSCoW** priority: **Must**, **Should**, **Could**.
 
 | ID | Requirement | Priority |
 |---|---|---|
-| HH-1 | Every User belongs to exactly one Household and has a role: `Owner` or `Member`. | Must |
-| HH-2 | An Owner can create, edit, and delete Shared accounts, categories, and household-wide budgets. | Must |
-| HH-3 | A Member can record and edit transactions on any account they can see (own Personal + household Shared), and manage their own Personal accounts and budgets. | Must |
-| HH-4 | A Member cannot edit or delete another member's Personal accounts, transactions, or budgets. | Must |
-| HH-5 | A Member cannot restructure Shared accounts, categories, or household-wide budgets (create/edit/delete) — only an Owner can. | Should |
-| HH-6 | An Owner can invite a new Member to the household. | Should |
-| HH-7 | Household-wide reports (net worth, cash flow) aggregate across Shared accounts and, at the viewer's choice, their own Personal accounts. | Should |
+| HH-1 | A User can belong to more than one Household, with an independent role (`Owner` or `Member`) in each — e.g. Owner of their own household and a Member of someone else's at the same time. At any moment, a session is scoped to exactly one of the user's households ("active"); switching is explicit (see HH-10). | Must |
+| HH-2 | An Owner can create, edit, and delete Shared accounts, categories, and household-wide budgets — within whichever household they are an Owner of and currently active in. | Must |
+| HH-3 | A Member can record and edit transactions on any account they can see (own Personal + household Shared), and manage their own Personal accounts and budgets — within the currently active household. | Must |
+| HH-4 | A Member cannot view, edit, or delete another Member's Personal accounts, transactions, or budgets. Only that household's Owner can view every Member's Personal data within it; write access to another member's Personal data is never granted, even to the Owner, unless explicitly stated otherwise (see §11). | Must |
+| HH-5 | A Member cannot restructure Shared accounts, categories, or household-wide budgets (create/edit/delete) — only that household's Owner can. | Should |
+| HH-6 | A person can register a new account at any time. Registering with no invite code creates a brand-new Household with that person as its Owner, active immediately. Registering with a valid invite code instead joins the Household that code belongs to, as a Member, active immediately. | Must |
+| HH-7 | Household-wide reports (net worth, cash flow) aggregate across Shared accounts and, at the viewer's choice, their own Personal accounts — scoped to the currently active household only. | Should |
+| HH-8 | An Owner can generate an invite code for their household and share it through any channel they choose (the app never sends it). | Must |
+| HH-9 | An invite code identifies which household it joins and nothing else — it does not grant any access by itself; it only shapes what registering or joining with it does (see HH-6, HH-11). | Must |
+| HH-10 | An already-logged-in user can switch their active household to any other household they belong to, without re-entering credentials. | Must |
+| HH-11 | An already-logged-in user can redeem a valid invite code to gain a Member membership in an additional household, without creating a new account. | Must |
 
 ---
 
@@ -254,14 +267,17 @@ Architectural principles to uphold:
 - Do we soft-delete (archive) accounts and transactions, or hard-delete?
 - Are transfers modeled as a pair of linked transactions or a first-class entity?
 - Which locale/currency formatting rules do we commit to for v1 (BRL only)?
-- Can the household Owner see a Member's Personal accounts/transactions, or are
-  Personal accounts truly private even from the Owner?
+- The Owner can *view* every Member's Personal accounts/transactions (confirmed).
+  Can the Owner also *edit or delete* another Member's Personal data, or is write
+  access still restricted to the owning Member only?
 - Can budgets mix scopes — e.g. a household budget for "Groceries" alongside a
   member's personal budget for "Hobbies" — or is scope fixed per category?
-- How does a new Member join the household (invite link/code, email invite, or
-  manual provisioning)? HH-6 assumes invites but the mechanism isn't defined.
-- Is household size effectively fixed at ~2 (the current use case), or should
-  the design anticipate more members (kids, extended family) later?
+- Invite code lifecycle: single-use (consumed on redemption) or reusable until the
+  Owner regenerates it? Does it expire? Can an Owner have more than one active code
+  at a time (e.g. to track who used which)?
+- When a user has multiple households, how does login pick which one becomes
+  "active" by default (most recently active? the first one created? must the user
+  choose explicitly even at login)?
 
 ---
 

@@ -11,9 +11,10 @@ public sealed class UsersService(IIdentityService identityService)
 {
     public async Task<CurrentUserResponse> GetCurrentUserAsync(
         Guid userId,
+        Guid householdId,
         CancellationToken cancellationToken)
     {
-        var profile = await identityService.GetUserAsync(userId, cancellationToken);
+        var profile = await identityService.GetUserAsync(userId, householdId, cancellationToken);
 
         // The JWT was valid (authentication already succeeded upstream) but no longer
         // resolves to a user - e.g. the account was deleted after the token was issued.
@@ -25,6 +26,16 @@ public sealed class UsersService(IIdentityService identityService)
         }
 
         return new CurrentUserResponse(profile.Id, profile.Name, profile.Email, profile.Role, profile.HouseholdId);
+    }
+
+    public async Task<IReadOnlyList<MembershipResponse>> GetMembershipsAsync(
+        Guid userId, CancellationToken cancellationToken)
+    {
+        var memberships = await identityService.GetMembershipsAsync(userId, cancellationToken);
+
+        return memberships
+            .Select(m => new MembershipResponse(m.HouseholdId, m.HouseholdName, m.Role))
+            .ToList();
     }
 
     public async Task<CreatedUserResponse> CreateMemberAsync(

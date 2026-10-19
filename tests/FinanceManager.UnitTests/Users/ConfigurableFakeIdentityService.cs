@@ -17,6 +17,8 @@ internal sealed class ConfigurableFakeIdentityService : IIdentityService
 
     public UserProfile? UserProfile { get; set; }
 
+    public IReadOnlyList<HouseholdMembershipInfo> Memberships { get; set; } = [];
+
     public Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 
@@ -33,10 +35,22 @@ internal sealed class ConfigurableFakeIdentityService : IIdentityService
         string email, string password, CancellationToken cancellationToken) =>
         throw new NotSupportedException();
 
-    public Task<UserProfile?> GetUserAsync(Guid userId, CancellationToken cancellationToken) =>
+    public Task<UserProfile?> GetUserAsync(Guid userId, Guid householdId, CancellationToken cancellationToken) =>
         Task.FromResult(UserProfile);
 
     public Task<ChangePasswordOutcome> ChangePasswordAsync(
         Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken) =>
         Task.FromResult(ChangePasswordOutcome);
+
+    public Task<IReadOnlyList<HouseholdMembershipInfo>> GetMembershipsAsync(
+        Guid userId, CancellationToken cancellationToken) =>
+        Task.FromResult(Memberships);
+
+    public Task<HouseholdRole?> GetMembershipRoleAsync(
+        Guid userId, Guid householdId, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    public Task<AddMembershipResult> AddMembershipAsync(
+        Guid userId, Guid householdId, HouseholdRole role, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
 }

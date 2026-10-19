@@ -2,6 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using FinanceManager.Application.Households.Requests;
+using FinanceManager.Application.Households.Responses;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +22,7 @@ public class LoginTests : IDisposable
     public async Task Login_WithCorrectCredentials_Returns200WithClaims()
     {
         var client = _factory.CreateClient();
+        await _factory.EnsureOwnerRegisteredAsync(client);
 
         var response = await client.PostAsJsonAsync(
             Route,
@@ -77,6 +80,7 @@ public class LoginTests : IDisposable
     public async Task Login_IssuedToken_ExpiresIn12Hours()
     {
         var client = _factory.CreateClient();
+        await _factory.EnsureOwnerRegisteredAsync(client);
 
         var response = await client.PostAsJsonAsync(
             Route,
@@ -89,5 +93,40 @@ public class LoginTests : IDisposable
         Assert.True(
             Math.Abs((token.ValidTo - expectedExpiry).TotalMinutes) < 5,
             $"Expected expiry near {expectedExpiry:O}, got {token.ValidTo:O}");
+    }
+
+    [Fact]
+    public async Task Login_WithMultipleMemberships_ActivatesEarliestCreated()
+    {
+        var client = _factory.CreateClient();
+        var ownerToken = await _factory.LoginAsOwnerAsync(client);
+        var ownerClient = _factory.CreateAuthenticatedClient(ownerToken);
+        var firstMembershipHouseholdId = (await (await ownerClient.GetAsync("/api/v1/users/me"))
+            .Content.ReadFromJsonAsync<CurrentUserResponse>(TestJsonOptions.Default))!.HouseholdId;
+
+        var secondOwnerClient = _factory.CreateClient();
+        var registerResponse = await secondOwnerClient.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new RegisterRequest(
+                "Second Owner", "second-owner-login@test.local", "SecondOwnerPassword123", null, "Second Household"));
+        var secondOwnerTokens = await registerResponse.Content
+            .ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        var authedSecondClient = _factory.CreateAuthenticatedClient(secondOwnerTokens!.AccessToken);
+        var invite = await (await authedSecondClient.PostAsync("/api/v1/households/invite-code", null))
+            .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
+
+        // The seed owner's first membership (their own household, created at registration)
+        // predates the one they're about to join - it must stay the one login activates.
+        await ownerClient.PostAsJsonAsync("/api/v1/households/join", new JoinHouseholdRequest(invite!.InviteCode!));
+
+        var response = await client.PostAsJsonAsync(
+            Route,
+            new LoginRequest(UserHouseholdApiFactory.SeedOwnerEmail, UserHouseholdApiFactory.SeedOwnerPassword));
+
+        var body = await response.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(body!.AccessToken);
+        Assert.Equal(
+            firstMembershipHouseholdId.ToString(),
+            token.Claims.First(c => c.Type == "household_id").Value);
     }
 }

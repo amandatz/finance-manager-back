@@ -17,9 +17,16 @@ public sealed class UsersController(UsersService usersService) : ControllerBase
     public async Task<ActionResult<CurrentUserResponse>> GetMe(CancellationToken cancellationToken)
     {
         // AuthenticationFailedException (thrown when the token no longer resolves to a
-        // user) is caught by DomainExceptionHandler and mapped to a 401 ProblemDetails
-        // response.
-        return Ok(await usersService.GetCurrentUserAsync(GetUserId(), cancellationToken));
+        // user, or to a membership in the token's household) is caught by
+        // DomainExceptionHandler and mapped to a 401 ProblemDetails response.
+        return Ok(await usersService.GetCurrentUserAsync(GetUserId(), GetHouseholdId(), cancellationToken));
+    }
+
+    [HttpGet("me/households")]
+    public async Task<ActionResult<IReadOnlyList<MembershipResponse>>> GetMyHouseholds(
+        CancellationToken cancellationToken)
+    {
+        return Ok(await usersService.GetMembershipsAsync(GetUserId(), cancellationToken));
     }
 
     [HttpPost]

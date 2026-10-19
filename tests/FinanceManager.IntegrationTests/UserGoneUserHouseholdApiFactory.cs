@@ -1,6 +1,7 @@
 using FinanceManager.Application.Abstractions;
 using FinanceManager.Domain.Enums;
 using FinanceManager.Infrastructure.Identity;
+using FinanceManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -21,7 +22,9 @@ public class UserGoneUserHouseholdApiFactory : UserHouseholdApiFactory
         services.RemoveAll<IIdentityService>();
         services.AddScoped<IIdentityService>(provider =>
             new UserGoneOnGetUserIdentityService(
-                new IdentityService(provider.GetRequiredService<UserManager<ApplicationUser>>())));
+                new IdentityService(
+                    provider.GetRequiredService<UserManager<ApplicationUser>>(),
+                    provider.GetRequiredService<FinanceManagerDbContext>())));
     }
 
     private sealed class UserGoneOnGetUserIdentityService(IIdentityService inner) : IIdentityService
@@ -42,11 +45,23 @@ public class UserGoneUserHouseholdApiFactory : UserHouseholdApiFactory
             string email, string password, CancellationToken cancellationToken) =>
             inner.ValidateCredentialsAsync(email, password, cancellationToken);
 
-        public Task<UserProfile?> GetUserAsync(Guid userId, CancellationToken cancellationToken) =>
+        public Task<UserProfile?> GetUserAsync(Guid userId, Guid householdId, CancellationToken cancellationToken) =>
             Task.FromResult<UserProfile?>(null);
 
         public Task<ChangePasswordOutcome> ChangePasswordAsync(
             Guid userId, string currentPassword, string newPassword, CancellationToken cancellationToken) =>
             inner.ChangePasswordAsync(userId, currentPassword, newPassword, cancellationToken);
+
+        public Task<IReadOnlyList<HouseholdMembershipInfo>> GetMembershipsAsync(
+            Guid userId, CancellationToken cancellationToken) =>
+            inner.GetMembershipsAsync(userId, cancellationToken);
+
+        public Task<HouseholdRole?> GetMembershipRoleAsync(
+            Guid userId, Guid householdId, CancellationToken cancellationToken) =>
+            inner.GetMembershipRoleAsync(userId, householdId, cancellationToken);
+
+        public Task<AddMembershipResult> AddMembershipAsync(
+            Guid userId, Guid householdId, HouseholdRole role, CancellationToken cancellationToken) =>
+            inner.AddMembershipAsync(userId, householdId, role, cancellationToken);
     }
 }

@@ -1,17 +1,14 @@
 using FinanceManager.Application.FinancialAccounts;
-using FinanceManager.Application.Seeding;
+using FinanceManager.Application.Households;
 using FinanceManager.Application.Users;
 using FluentValidation;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FinanceManager.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         ValidatorOptions.Global.LanguageManager.Enabled = false;
 
@@ -20,9 +17,7 @@ public static class DependencyInjection
         services.AddScoped<FinancialAccountsService>();
         services.AddScoped<AuthService>();
         services.AddScoped<UsersService>();
-
-        services.Configure<SeedOptions>(configuration.GetSection("Seed"));
-        services.AddScoped<HouseholdSeeder>();
+        services.AddScoped<HouseholdsService>();
 
         return services;
     }

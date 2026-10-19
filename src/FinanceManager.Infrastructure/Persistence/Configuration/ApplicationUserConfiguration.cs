@@ -12,8 +12,5 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
         builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(UserConstraints.NameMaxLength);
-
-        builder.Property(x => x.HouseholdId)
-            .IsRequired();
     }
 }

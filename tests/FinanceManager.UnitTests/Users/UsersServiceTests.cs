@@ -15,7 +15,7 @@ public class UsersServiceTests
         var service = new UsersService(identityService);
 
         await Assert.ThrowsAsync<AuthenticationFailedException>(
-            () => service.GetCurrentUserAsync(Guid.NewGuid(), CancellationToken.None));
+            () => service.GetCurrentUserAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None));
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class UsersServiceTests
         var identityService = new ConfigurableFakeIdentityService { UserProfile = profile };
         var service = new UsersService(identityService);
 
-        var response = await service.GetCurrentUserAsync(profile.Id, CancellationToken.None);
+        var response = await service.GetCurrentUserAsync(profile.Id, profile.HouseholdId, CancellationToken.None);
 
         Assert.Equal(profile.Id, response.Id);
         Assert.Equal(profile.Email, response.Email);

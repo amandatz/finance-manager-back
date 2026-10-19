@@ -1,6 +1,5 @@
 using FinanceManager.Api;
 using FinanceManager.Application;
-using FinanceManager.Application.Seeding;
 using FinanceManager.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -13,17 +12,11 @@ builder.Configuration.AddJsonFile(
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<HouseholdSeeder>();
-    await seeder.SeedAsync(CancellationToken.None);
-}
 
 app.UseExceptionHandler();
 

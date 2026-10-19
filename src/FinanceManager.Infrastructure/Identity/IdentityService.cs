@@ -1,11 +1,14 @@
 using FinanceManager.Application.Abstractions;
 using FinanceManager.Domain.Enums;
+using FinanceManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinanceManager.Infrastructure.Identity;
 
-public sealed class IdentityService(UserManager<ApplicationUser> userManager) : IIdentityService
+public sealed class IdentityService(
+    UserManager<ApplicationUser> userManager,
+    FinanceManagerDbContext dbContext) : IIdentityService
 {
     public async Task<bool> AnyUsersExistAsync(CancellationToken cancellationToken)
     {
@@ -31,8 +34,6 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
             UserName = email,
             Email = email,
             Name = name,
-            HouseholdId = householdId,
-            Role = role,
         };
 
         var result = await userManager.CreateAsync(user, password);
@@ -48,6 +49,16 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
                 null,
                 errors);
         }
+
+        dbContext.HouseholdMemberships.Add(new HouseholdMembership
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            HouseholdId = householdId,
+            Role = role,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new CreateUserResult(CreateUserOutcome.Success, user.Id, []);
     }
@@ -69,16 +80,37 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
             return null;
         }
 
-        return new AuthenticatedUser(user.Id, user.HouseholdId, user.Role);
+        // A user with more than one membership activates the earliest-created one by
+        // default - see .tasks/household-self-registration.md Unresolved #1.
+        var membership = await dbContext.HouseholdMemberships
+            .Where(m => m.UserId == user.Id)
+            .OrderBy(m => m.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (membership is null)
+        {
+            // Defensive: every user is created with at least one membership. Treated the
+            // same as invalid credentials rather than a distinct error.
+            return null;
+        }
+
+        return new AuthenticatedUser(user.Id, membership.HouseholdId, membership.Role);
     }
 
-    public async Task<UserProfile?> GetUserAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<UserProfile?> GetUserAsync(Guid userId, Guid householdId, CancellationToken cancellationToken)
     {
         var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return null;
+        }
 
-        return user is null
+        var membership = await dbContext.HouseholdMemberships
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.HouseholdId == householdId, cancellationToken);
+
+        return membership is null
             ? null
-            : new UserProfile(user.Id, user.Name, user.Email!, user.Role, user.HouseholdId);
+            : new UserProfile(user.Id, user.Name, user.Email!, membership.Role, householdId);
     }
 
     public async Task<ChangePasswordOutcome> ChangePasswordAsync(
@@ -104,5 +136,54 @@ public sealed class IdentityService(UserManager<ApplicationUser> userManager) : 
         return isCurrentPasswordWrong
             ? ChangePasswordOutcome.CurrentPasswordIncorrect
             : ChangePasswordOutcome.NewPasswordPolicyViolation;
+    }
+
+    public async Task<IReadOnlyList<HouseholdMembershipInfo>> GetMembershipsAsync(
+        Guid userId, CancellationToken cancellationToken)
+    {
+        return await dbContext.HouseholdMemberships
+            .Where(m => m.UserId == userId)
+            .Join(
+                dbContext.Households,
+                m => m.HouseholdId,
+                h => h.Id,
+                (m, h) => new HouseholdMembershipInfo(h.Id, h.Name, m.Role, m.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<HouseholdRole?> GetMembershipRoleAsync(
+        Guid userId, Guid householdId, CancellationToken cancellationToken)
+    {
+        var membership = await dbContext.HouseholdMemberships
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.HouseholdId == householdId, cancellationToken);
+
+        return membership?.Role;
+    }
+
+    public async Task<AddMembershipResult> AddMembershipAsync(
+        Guid userId,
+        Guid householdId,
+        HouseholdRole role,
+        CancellationToken cancellationToken)
+    {
+        var existing = await dbContext.HouseholdMemberships
+            .AnyAsync(m => m.UserId == userId && m.HouseholdId == householdId, cancellationToken);
+
+        if (existing)
+        {
+            return new AddMembershipResult(AddMembershipOutcome.AlreadyMember);
+        }
+
+        dbContext.HouseholdMemberships.Add(new HouseholdMembership
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            HouseholdId = householdId,
+            Role = role,
+            CreatedAt = DateTime.UtcNow,
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new AddMembershipResult(AddMembershipOutcome.Success);
     }
 }

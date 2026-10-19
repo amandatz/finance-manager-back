@@ -19,12 +19,22 @@ public interface IIdentityService
         string password,
         CancellationToken cancellationToken);
 
-    Task<UserProfile?> GetUserAsync(Guid userId, CancellationToken cancellationToken);
+    Task<UserProfile?> GetUserAsync(Guid userId, Guid householdId, CancellationToken cancellationToken);
 
     Task<ChangePasswordOutcome> ChangePasswordAsync(
         Guid userId,
         string currentPassword,
         string newPassword,
+        CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<HouseholdMembershipInfo>> GetMembershipsAsync(Guid userId, CancellationToken cancellationToken);
+
+    Task<HouseholdRole?> GetMembershipRoleAsync(Guid userId, Guid householdId, CancellationToken cancellationToken);
+
+    Task<AddMembershipResult> AddMembershipAsync(
+        Guid userId,
+        Guid householdId,
+        HouseholdRole role,
         CancellationToken cancellationToken);
 }
 
@@ -44,9 +54,19 @@ public sealed record AuthenticatedUser(Guid UserId, Guid HouseholdId, HouseholdR
 
 public sealed record UserProfile(Guid Id, string Name, string Email, HouseholdRole Role, Guid HouseholdId);
 
+public sealed record HouseholdMembershipInfo(Guid HouseholdId, string HouseholdName, HouseholdRole Role, DateTime CreatedAt);
+
 public enum ChangePasswordOutcome
 {
     Success,
     CurrentPasswordIncorrect,
     NewPasswordPolicyViolation,
 }
+
+public enum AddMembershipOutcome
+{
+    Success,
+    AlreadyMember,
+}
+
+public sealed record AddMembershipResult(AddMembershipOutcome Outcome);

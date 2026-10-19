@@ -17,6 +17,10 @@ public sealed class FinanceManagerDbContext : IdentityUserContext<ApplicationUse
 
     public DbSet<Household> Households => Set<Household>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<HouseholdMembership> HouseholdMemberships => Set<HouseholdMembership>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
