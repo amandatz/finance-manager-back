@@ -75,3 +75,7 @@ Generated/
 # Task planning/verification tool artifacts (not product docs)
 .checks/
 .tasks/
+
+# Documentation lives in the shared docs/ at the repo root, not in here
+/docs/
+/.docs/
