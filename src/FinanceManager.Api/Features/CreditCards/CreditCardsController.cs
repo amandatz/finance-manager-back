@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.CreditCards;
 using FinanceManager.Application.CreditCards.Requests;
 using FinanceManager.Application.CreditCards.Responses;
@@ -10,7 +11,9 @@ namespace FinanceManager.Api.Features.CreditCards;
 [ApiController]
 [Route("api/v1/credit-cards")]
 [Authorize]
-public sealed class CreditCardsController(CreditCardsService service) : ControllerBase
+public sealed class CreditCardsController(
+    CreditCardsService service,
+    ICurrentHouseholdAccessor currentHouseholdAccessor) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<CreditCardResponse>> Create(
@@ -61,5 +64,5 @@ public sealed class CreditCardsController(CreditCardsService service) : Controll
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-    private Guid GetHouseholdId() => Guid.Parse(User.FindFirstValue("household_id")!);
+    private Guid GetHouseholdId() => currentHouseholdAccessor.HouseholdId;
 }
