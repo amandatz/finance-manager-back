@@ -4,9 +4,9 @@ services:
     container_name: finance-manager-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: finance_manager
-      POSTGRES_USER: finance_manager
-      POSTGRES_PASSWORD: finance_manager_dev
+      POSTGRES_DB: ${POSTGRES_DB:-finance_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-finance_manager}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finance_manager_dev}
     ports:
       - "127.0.0.1:5432:5432"
     volumes:

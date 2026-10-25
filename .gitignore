@@ -71,3 +71,7 @@ docker-compose.override.yml
 
 # Generated files
 Generated/
+
+# Task planning/verification tool artifacts (not product docs)
+.checks/
+.tasks/
