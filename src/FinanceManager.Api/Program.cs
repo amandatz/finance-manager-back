@@ -34,6 +34,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Must run before auth/authorization so preflight (OPTIONS) requests get CORS
+// headers even though they carry no credentials yet.
+app.UseCors(FinanceManager.Api.DependencyInjection.CorsPolicyName);
+
 app.UseAuthentication();
 app.UseAuthorization();
 

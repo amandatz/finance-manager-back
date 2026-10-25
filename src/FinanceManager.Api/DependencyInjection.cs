@@ -10,6 +10,13 @@ namespace FinanceManager.Api;
 
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Name of the CORS policy applied to the whole API. Kept as a constant so
+    /// <c>Program.cs</c> can reference the same policy it configures here without
+    /// repeating the literal.
+    /// </summary>
+    public const string CorsPolicyName = "FrontendCors";
+
     public static IServiceCollection AddPresentation(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -17,6 +24,32 @@ public static class DependencyInjection
         services.AddControllers(options => options.Filters.Add<ValidationFilter>());
 
         services.AddProblemDetails();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(CorsPolicyName, policy =>
+            {
+                // Allowed origins are configuration-driven (Cors:AllowedOrigins), not
+                // hardcoded, so each environment (dev, staging, prod) can list its own
+                // frontend origin(s) without a code change. Falls back to the Next.js
+                // dev server default so a clean checkout works out of the box.
+                //
+                // Get<string[]>() on an empty JSON array ("AllowedOrigins": []) returns an
+                // empty array, not null - appsettings.json's base config uses exactly that
+                // empty array, so the null-check alone (`?? [...]`) never triggers and the
+                // policy silently ends up with no allowed origins. Both cases must be
+                // checked explicitly.
+                var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+                if (allowedOrigins is null || allowedOrigins.Length == 0)
+                    allowedOrigins = ["http://localhost:3000"];
+
+                policy
+                    .WithOrigins(allowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
+            });
+        });
 
         // Order matters: IExceptionHandler implementations are tried in registration
         // order, and the first one whose TryHandleAsync returns true wins. Domain
