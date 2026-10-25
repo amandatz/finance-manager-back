@@ -3,6 +3,7 @@ using FinanceManager.Domain.Repositories;
 using FinanceManager.Infrastructure.Identity;
 using FinanceManager.Infrastructure.Persistence;
 using FinanceManager.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -17,9 +18,19 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDbContext<FinanceManagerDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"),
+                npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorCodesToAdd: null))
+                .UseSnakeCaseNamingConvention());
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentHouseholdAccessor, HttpContextCurrentHouseholdAccessor>();
 
         services.AddScoped<IFinancialAccountRepository, FinancialAccountRepository>();
+        services.AddScoped<ICreditCardRepository, CreditCardRepository>();
         services.AddScoped<IHouseholdRepository, HouseholdRepository>();
 
         services.AddIdentityCore<ApplicationUser>(options =>

@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FinanceManager.IntegrationTests;
 
-public class ThrowingFinancialAccountsApiFactory : InMemoryDbApiFactory
+public class ThrowingFinancialAccountsApiFactory : UserHouseholdApiFactory
 {
     protected override void ConfigureServices(IServiceCollection services)
     {

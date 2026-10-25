@@ -1,4 +1,4 @@
-﻿using FinanceManager.Domain.Enums;
+using FinanceManager.Domain.Enums;
 
 namespace FinanceManager.Application.FinancialAccounts.Requests;
 

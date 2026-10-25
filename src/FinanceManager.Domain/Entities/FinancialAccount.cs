@@ -1,10 +1,10 @@
-﻿using FinanceManager.Domain.Common;
+using FinanceManager.Domain.Common;
 using FinanceManager.Domain.Enums;
 using FinanceManager.Domain.Exceptions;
 
 namespace FinanceManager.Domain.Entities;
 
-public sealed class FinancialAccount : Entity
+public sealed class FinancialAccount : HouseholdScopedOwnedEntity
 {
     private FinancialAccount()
     {
@@ -16,7 +16,10 @@ public sealed class FinancialAccount : Entity
     public FinancialAccount(
         string name,
         FinancialAccountType type,
+        Guid householdId,
+        Guid ownerUserId,
         string? institutionName = null)
+        : base(householdId, ownerUserId)
     {
         ValidateName(name);
         ValidateInstitutionName(institutionName);

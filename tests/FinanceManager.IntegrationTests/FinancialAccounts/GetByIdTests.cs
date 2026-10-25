@@ -1,5 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
+using System.Security.Claims;
 using FinanceManager.Application.FinancialAccounts.Responses;
 using FinanceManager.Domain.Entities;
 using FinanceManager.Domain.Enums;
@@ -15,12 +17,34 @@ public class GetByIdTests : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
+    private async Task<(HttpClient Client, Guid UserId, Guid HouseholdId)> CreateAuthenticatedOwnerAsync()
+    {
+        var client = _factory.CreateClient();
+        var tokens = await _factory.LoginAsOwnerWithTokensAsync(client);
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(tokens.AccessToken);
+        var userId = Guid.Parse(jwt.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+        var householdId = Guid.Parse(jwt.Claims.First(c => c.Type == "household_id").Value);
+
+        return (_factory.CreateAuthenticatedClient(tokens.AccessToken), userId, householdId);
+    }
+
+    [Fact]
+    public async Task GetById_WithoutAuthentication_Returns401()
+    {
+        var client = _factory.CreateClient();
+
+        var response = await client.GetAsync($"{Route}/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     [Fact]
     public async Task GetById_WithActiveAccount_Returns200()
     {
-        var account = await _factory.SeedAccountAsync(new FinancialAccount("Checking", FinancialAccountType.Bank));
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
 
-        var client = _factory.CreateClient();
         var response = await client.GetAsync($"{Route}/{account.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -31,7 +55,8 @@ public class GetByIdTests : IDisposable
     [Fact]
     public async Task GetById_WithUnknownId_Returns404()
     {
-        var client = _factory.CreateClient();
+        var (client, _, _) = await CreateAuthenticatedOwnerAsync();
+
         var response = await client.GetAsync($"{Route}/{Guid.NewGuid()}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
@@ -42,7 +67,8 @@ public class GetByIdTests : IDisposable
     [Fact]
     public async Task GetById_WithUnknownId_IncludesTraceId()
     {
-        var client = _factory.CreateClient();
+        var (client, _, _) = await CreateAuthenticatedOwnerAsync();
+
         var response = await client.GetAsync($"{Route}/{Guid.NewGuid()}");
 
         var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestJsonOptions.Default);
@@ -53,11 +79,11 @@ public class GetByIdTests : IDisposable
     [Fact]
     public async Task GetById_WithDeactivatedAccount_Returns404()
     {
-        var account = new FinancialAccount("Checking", FinancialAccountType.Bank);
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId);
         account.Deactivate();
         await _factory.SeedAccountAsync(account);
 
-        var client = _factory.CreateClient();
         var response = await client.GetAsync($"{Route}/{account.Id}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

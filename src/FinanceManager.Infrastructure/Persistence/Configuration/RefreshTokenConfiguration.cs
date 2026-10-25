@@ -8,8 +8,6 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        builder.ToTable("RefreshTokens");
-
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.TokenHash)

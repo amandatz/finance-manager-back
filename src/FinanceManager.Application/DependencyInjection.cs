@@ -1,3 +1,4 @@
+using FinanceManager.Application.CreditCards;
 using FinanceManager.Application.FinancialAccounts;
 using FinanceManager.Application.Households;
 using FinanceManager.Application.Users;
@@ -15,6 +16,7 @@ public static class DependencyInjection
         services.AddValidatorsFromAssemblyContaining(typeof(DependencyInjection));
 
         services.AddScoped<FinancialAccountsService>();
+        services.AddScoped<CreditCardsService>();
         services.AddScoped<AuthService>();
         services.AddScoped<UsersService>();
         services.AddScoped<HouseholdsService>();

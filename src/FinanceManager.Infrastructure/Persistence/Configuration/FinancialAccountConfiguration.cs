@@ -8,8 +8,6 @@ internal sealed class FinancialAccountConfiguration : IEntityTypeConfiguration<F
 {
     public void Configure(EntityTypeBuilder<FinancialAccount> builder)
     {
-        builder.ToTable("FinancialAccounts");
-
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name)
@@ -18,5 +16,7 @@ internal sealed class FinancialAccountConfiguration : IEntityTypeConfiguration<F
 
         builder.Property(x => x.InstitutionName)
             .HasMaxLength(FinancialAccount.InstitutionNameMaxLength);
+
+        builder.ConfigureHouseholdScopedOwnedEntity();
     }
 }

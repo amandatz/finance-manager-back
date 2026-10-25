@@ -12,8 +12,10 @@ public class FailureHandlingTests : IDisposable
     public async Task UnhandledException_Returns500WithBareProblemDetails()
     {
         var client = _factory.CreateClient();
+        var token = await _factory.LoginAsOwnerAsync(client);
+        var authenticatedClient = _factory.CreateAuthenticatedClient(token);
 
-        var response = await client.GetAsync("/api/v1/financial-accounts");
+        var response = await authenticatedClient.GetAsync("/api/v1/financial-accounts");
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
 
