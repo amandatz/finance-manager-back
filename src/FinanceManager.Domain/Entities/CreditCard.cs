@@ -13,8 +13,7 @@ namespace FinanceManager.Domain.Entities;
 ///
 /// Its only relationship to <see cref="FinancialAccount"/> is the optional
 /// <see cref="SettlementAccountId"/> - "which account the bill gets paid from" - not a
-/// structural parent/child link. See <c>docs/specs/008-contas-cartoes.md</c> section 3 for
-/// the full rationale.
+/// structural parent/child link.
 /// </summary>
 public sealed class CreditCard : HouseholdScopedOwnedEntity
 {

@@ -80,8 +80,9 @@ public sealed class IdentityService(
             return null;
         }
 
-        // A user with more than one membership activates the earliest-created one by
-        // default - see .tasks/household-self-registration.md Unresolved #1.
+        // A user with more than one household membership activates the earliest-created one
+        // by default, since there is currently no explicit "active household" selection step
+        // at login.
         var membership = await dbContext.HouseholdMemberships
             .Where(m => m.UserId == user.Id)
             .OrderBy(m => m.CreatedAt)
