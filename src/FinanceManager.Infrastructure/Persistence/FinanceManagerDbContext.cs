@@ -56,7 +56,7 @@ public sealed class FinanceManagerDbContext : IdentityUserContext<ApplicationUse
     /// entire multi-tenant isolation mechanism: a new entity opts in purely by implementing
     /// <see cref="IHouseholdScoped"/> (in practice, by inheriting
     /// <see cref="HouseholdScopedEntity"/>) - nothing here is aware of individual entity
-    /// types by name, so task 007's <c>Transaction</c>/<c>Category</c> get isolation for free.
+    /// types by name, so any future household-scoped entity gets isolation for free.
     ///
     /// The filter captures <c>this</c> (the DbContext instance, which holds the accessor) in
     /// the expression tree rather than a materialized Guid, so it re-evaluates

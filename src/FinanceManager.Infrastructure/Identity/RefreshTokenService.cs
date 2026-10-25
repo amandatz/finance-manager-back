@@ -74,8 +74,8 @@ public sealed class RefreshTokenService(
         }
 
         // Carried forward unchanged from the token being rotated - refresh never re-derives
-        // "current" household/role from live membership state. See .checks/
-        // household-self-registration.md's Landing for why.
+        // "current" household/role from live membership state, so a role/household change
+        // only takes effect on the next explicit login or household switch.
         var accessToken = tokenGenerator.GenerateAccessToken(record.UserId, record.HouseholdId, record.Role);
         var (rawToken, newHash) = GenerateRawTokenAndHash();
 
