@@ -52,7 +52,3 @@ dotnet test
 `tests/FinanceManager.IntegrationTests` sobe a API em memória (via `WebApplicationFactory`)
 contra um banco real para testar os endpoints ponta a ponta.
 
-## Documentação
-
-- `docs/frontend-auth-spec.md` — contrato dos endpoints de autenticação, consumido pelo frontend.
-- `docs/architecture-multitenancy.md` — como o escopo por household funciona (`IHouseholdScoped`, `ICurrentHouseholdAccessor`).
