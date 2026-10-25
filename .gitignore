@@ -79,3 +79,7 @@ Generated/
 # Documentation lives in the shared docs/ at the repo root, not in here
 /docs/
 /.docs/
+
+# Claude Code config - local only, not committed
+.claude/
+CLAUDE.md
