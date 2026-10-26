@@ -50,18 +50,8 @@ public sealed class FinanceManagerDbContext : IdentityUserContext<ApplicationUse
     }
 
     /// <summary>
-    /// Walks every entity type in the model and, for each one assignable to
-    /// <see cref="IHouseholdScoped"/>, applies a global query filter restricting rows to the
-    /// current request's household (<see cref="_currentHouseholdAccessor"/>). This is the
-    /// entire multi-tenant isolation mechanism: a new entity opts in purely by implementing
-    /// <see cref="IHouseholdScoped"/> (in practice, by inheriting
-    /// <see cref="HouseholdScopedEntity"/>) - nothing here is aware of individual entity
-    /// types by name, so any future household-scoped entity gets isolation for free.
-    ///
-    /// The filter captures <c>this</c> (the DbContext instance, which holds the accessor) in
-    /// the expression tree rather than a materialized Guid, so it re-evaluates
-    /// <see cref="ICurrentHouseholdAccessor.HouseholdId"/> on every query - correct because a
-    /// new DbContext instance (and hence a fresh read of the claim) is created per request.
+    /// Applies a global query filter scoping every <see cref="IHouseholdScoped"/> entity to the current household.
+    /// Captures <c>this</c> rather than a materialized id, so it re-evaluates <see cref="ICurrentHouseholdAccessor.HouseholdId"/> on every query.
     /// </summary>
     private void ApplyHouseholdScopedQueryFilters(ModelBuilder modelBuilder)
     {

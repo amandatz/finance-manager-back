@@ -1,8 +1,7 @@
 namespace FinanceManager.Application.Users;
 
 /// <summary>
-/// Shared constraints on user data - referenced by both request validators and the EF
-/// configuration for <c>ApplicationUser</c>, so the two stay in sync from one source.
+/// Shared constraints on user data, referenced by both request validators and the EF configuration for <c>ApplicationUser</c>.
 /// </summary>
 public static class UserConstraints
 {

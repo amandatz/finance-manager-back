@@ -3,16 +3,8 @@ using FinanceManager.Domain.Exceptions;
 namespace FinanceManager.Domain.Common;
 
 /// <summary>
-/// Base class for entities that are both household-scoped (see
-/// <see cref="HouseholdScopedEntity"/>) and have one or more individual owners within that
-/// household - e.g. <c>FinancialAccount</c> and <c>CreditCard</c> today. Ownership is N:N
-/// (an entity can have 2+ owners, meaning "shared" between exactly those people) rather than
-/// a single <c>OwnerUserId</c> + <c>Visibility</c> flag: see
-/// <c>back/docs/architecture-multitenancy.md</c> for the full rationale.
-///
-/// Shared here (rather than duplicated per entity) because both current consumers need the
-/// identical invariants: at least one owner at all times, no duplicate owners, and the same
-/// "only an owner can mutate/delete" authorization shape at the application layer.
+/// Base class for <see cref="HouseholdScopedEntity"/> entities with N:N individual owners within
+/// that household, rather than a single <c>OwnerUserId</c> + <c>Visibility</c> flag.
 /// </summary>
 public abstract class HouseholdScopedOwnedEntity : HouseholdScopedEntity
 {
@@ -30,9 +22,7 @@ public abstract class HouseholdScopedOwnedEntity : HouseholdScopedEntity
     }
 
     /// <summary>
-    /// Every user who owns this entity - at least one (enforced below), with no duplicates.
-    /// An entity with exactly one owner behaves like what used to be called "Personal" in
-    /// practice; 2+ owners means shared between exactly those people.
+    /// Every user who owns this entity - at least one, enforced below, with no duplicates.
     /// </summary>
     public IReadOnlyCollection<Guid> OwnerUserIds => _ownerUserIds.AsReadOnly();
 

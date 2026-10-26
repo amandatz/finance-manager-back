@@ -1,8 +1,7 @@
 namespace FinanceManager.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when an operation cannot complete because it collides with existing state
-/// (e.g. a unique constraint such as "email already in use"). Maps to HTTP 409.
+/// Thrown when an operation collides with existing state. Maps to HTTP 409.
 /// </summary>
 public sealed class ConflictException : DomainException
 {

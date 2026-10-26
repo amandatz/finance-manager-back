@@ -5,11 +5,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace FinanceManager.Infrastructure.Persistence.Configuration;
 
 /// <summary>
-/// Shared EF Core mapping for every <see cref="HouseholdScopedOwnedEntity"/> subtype
-/// (<c>FinancialAccount</c>, <c>CreditCard</c>) - the <c>HouseholdId</c> property and the
-/// owners collection are identical across all of them, so each
-/// <see cref="IEntityTypeConfiguration{TEntity}"/> calls this once instead of repeating the
-/// mapping.
+/// Shared EF Core mapping for every <see cref="HouseholdScopedOwnedEntity"/> subtype, so each
+/// <see cref="IEntityTypeConfiguration{TEntity}"/> doesn't repeat it.
 /// </summary>
 internal static class HouseholdScopedOwnedEntityConfigurationExtensions
 {

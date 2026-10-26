@@ -11,15 +11,12 @@ public interface IRefreshTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Redeems a refresh token for a new pair, rotating it in the process. Returns
-    /// <c>null</c> for any rejection reason - unknown, expired, or an already-rotated
-    /// token being replayed - the caller does not need to distinguish them.
+    /// Redeems and rotates a refresh token. Returns <c>null</c> for any rejection reason; callers don't need to distinguish them.
     /// </summary>
     Task<TokenPair?> RefreshAsync(string refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Revokes a refresh token. Idempotent: an unknown, already-revoked, or expired token
-    /// is a no-op, never an error.
+    /// Revokes a refresh token. Idempotent - an unknown or already-revoked token is a no-op, never an error.
     /// </summary>
     Task RevokeAsync(string refreshToken, CancellationToken cancellationToken);
 }

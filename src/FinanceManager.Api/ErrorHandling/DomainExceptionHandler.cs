@@ -7,13 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace FinanceManager.Api.ErrorHandling;
 
 /// <summary>
-/// Maps every <see cref="DomainException"/> subtype to its corresponding HTTP status code
-/// and a consistent <see cref="ProblemDetails"/> body, in one place, instead of each
-/// controller/service translating outcomes to status codes by hand. Registered before
-/// <see cref="GlobalExceptionHandler"/> in the exception handler chain
-/// (see <c>DependencyInjection.AddPresentation</c>): this handler only claims exceptions it
-/// recognizes (returns <c>false</c> otherwise) so anything unexpected still falls through
-/// to the generic 500 handler.
+/// Maps each <see cref="DomainException"/> subtype to its HTTP status code and a <see cref="ProblemDetails"/> body.
+/// Returns <c>false</c> for exceptions it doesn't recognize, so they fall through to <see cref="GlobalExceptionHandler"/>.
 /// </summary>
 public sealed class DomainExceptionHandler(ILogger<DomainExceptionHandler> logger) : IExceptionHandler
 {

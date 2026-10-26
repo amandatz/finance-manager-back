@@ -1,8 +1,7 @@
 namespace FinanceManager.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when a requested entity does not exist, or is not visible/active for the
-/// caller (e.g. soft-deleted). Maps to HTTP 404.
+/// Thrown when a requested entity does not exist or is not visible to the caller. Maps to HTTP 404.
 /// </summary>
 public sealed class NotFoundException : DomainException
 {

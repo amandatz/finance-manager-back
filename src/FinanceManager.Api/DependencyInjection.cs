@@ -11,9 +11,7 @@ namespace FinanceManager.Api;
 public static class DependencyInjection
 {
     /// <summary>
-    /// Name of the CORS policy applied to the whole API. Kept as a constant so
-    /// <c>Program.cs</c> can reference the same policy it configures here without
-    /// repeating the literal.
+    /// Name of the CORS policy applied to the API; kept as a constant so <c>Program.cs</c> can reference it.
     /// </summary>
     public const string CorsPolicyName = "FrontendCors";
 

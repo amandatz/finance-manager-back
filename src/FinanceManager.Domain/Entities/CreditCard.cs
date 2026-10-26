@@ -4,16 +4,7 @@ using FinanceManager.Domain.Exceptions;
 namespace FinanceManager.Domain.Entities;
 
 /// <summary>
-/// A credit card - a first-class, household-scoped, owned entity in its own right, modeled
-/// as a sibling of <see cref="FinancialAccount"/> rather than 1:1-linked to one. A
-/// FinancialAccount represents an asset (money you hold); a credit card is a liability (a
-/// credit line - its "balance" is what you owe, not what you have), so conflating the two
-/// under one base record (even via a 1:1 link) mixes opposite concepts. A store credit card,
-/// for instance, has no natural "account" backing it at all.
-///
-/// Its only relationship to <see cref="FinancialAccount"/> is the optional
-/// <see cref="SettlementAccountId"/> - "which account the bill gets paid from" - not a
-/// structural parent/child link.
+/// A credit card: a liability, modeled as a sibling of <see cref="FinancialAccount"/> rather than linked 1:1 to one.
 /// </summary>
 public sealed class CreditCard : HouseholdScopedOwnedEntity
 {
@@ -57,8 +48,7 @@ public sealed class CreditCard : HouseholdScopedOwnedEntity
     public int PaymentDueDay { get; private set; }
 
     /// <summary>
-    /// Optional FK to the <see cref="FinancialAccount"/> the bill is paid from - a UI
-    /// convenience, not a structural requirement (see type-level remarks).
+    /// Optional FK to the <see cref="FinancialAccount"/> the bill is paid from.
     /// </summary>
     public Guid? SettlementAccountId { get; private set; }
 

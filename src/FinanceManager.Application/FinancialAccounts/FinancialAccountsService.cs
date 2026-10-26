@@ -83,12 +83,8 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
     }
 
     /// <summary>
-    /// Same existence check as <see cref="GetActiveOrThrowAsync"/>, plus an ownership check -
-    /// a household member who is not an owner of the account gets the exact same
-    /// <see cref="NotFoundException"/> as a cross-household caller would, rather than a
-    /// distinguishable 403: the codebase has no precedent anywhere for mapping a domain
-    /// exception to 403 (see <c>DomainExceptionHandler</c>), and leaking "this exists but
-    /// isn't yours" would contradict the project's existing "don't leak existence" pattern.
+    /// Same as <see cref="GetActiveOrThrowAsync"/>, but also requires the caller to be an owner -
+    /// non-owners get <see cref="NotFoundException"/> rather than a 403, so existence is never leaked.
     /// </summary>
     private async Task<FinancialAccount> GetOwnedOrThrowAsync(
         Guid id,

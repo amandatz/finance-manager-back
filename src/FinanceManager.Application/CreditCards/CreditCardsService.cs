@@ -93,10 +93,8 @@ public sealed class CreditCardsService(
     }
 
     /// <summary>
-    /// Same existence check as <see cref="GetActiveOrThrowAsync"/>, plus an ownership check -
-    /// a household member who is not an owner of the card gets the exact same
-    /// <see cref="NotFoundException"/> as a cross-household caller would (no 403 precedent
-    /// anywhere in this codebase - see FinancialAccountsService for the identical pattern).
+    /// Same as <see cref="GetActiveOrThrowAsync"/>, but also requires the caller to be an owner -
+    /// non-owners get <see cref="NotFoundException"/> rather than a 403, so existence is never leaked.
     /// </summary>
     private async Task<CreditCard> GetOwnedOrThrowAsync(
         Guid id,

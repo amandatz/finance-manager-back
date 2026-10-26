@@ -5,9 +5,7 @@ using Microsoft.AspNetCore.Http;
 namespace FinanceManager.Infrastructure.Identity;
 
 /// <summary>
-/// Reads the current household id from the <c>household_id</c> claim on
-/// <see cref="IHttpContextAccessor.HttpContext"/>'s <c>User</c>. Registered scoped (not
-/// singleton) because it depends on per-request <see cref="HttpContext"/>.
+/// Reads the current household id from the <c>household_id</c> claim on the current <see cref="HttpContext"/>'s <c>User</c>.
 /// </summary>
 public sealed class HttpContextCurrentHouseholdAccessor(IHttpContextAccessor httpContextAccessor)
     : ICurrentHouseholdAccessor
