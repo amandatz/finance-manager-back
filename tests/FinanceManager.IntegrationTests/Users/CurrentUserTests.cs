@@ -52,6 +52,16 @@ public class CurrentUserTests : IDisposable
     }
 
     [Fact]
+    public async Task GetMe_WithNoActiveHousehold_Returns401()
+    {
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+
+        var response = await client.GetAsync(Route);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetMe_WhenUserNoLongerExists_Returns401WithProblemDetails()
     {
         using var factory = new UserGoneUserHouseholdApiFactory();

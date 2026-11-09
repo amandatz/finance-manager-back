@@ -83,4 +83,16 @@ public class InviteCodeTests : IDisposable
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task GenerateInviteCode_WithNoActiveHousehold_Returns403()
+    {
+        // No active household means no role claim either, so [Authorize(Roles = Owner)]
+        // denies the request before the controller (and GetHouseholdId) ever runs.
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+
+        var response = await client.PostAsync(Route, null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
 }

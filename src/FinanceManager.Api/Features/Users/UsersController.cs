@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.Users;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
@@ -11,7 +12,9 @@ namespace FinanceManager.Api.Features.Users;
 [ApiController]
 [Route("api/v1/users")]
 [Authorize]
-public sealed class UsersController(UsersService usersService) : ControllerBase
+public sealed class UsersController(
+    UsersService usersService,
+    ICurrentHouseholdAccessor currentHouseholdAccessor) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<ActionResult<CurrentUserResponse>> GetMe(CancellationToken cancellationToken)
@@ -19,7 +22,8 @@ public sealed class UsersController(UsersService usersService) : ControllerBase
         // AuthenticationFailedException (thrown when the token no longer resolves to a
         // user, or to a membership in the token's household) is caught by
         // DomainExceptionHandler and mapped to a 401 ProblemDetails response.
-        return Ok(await usersService.GetCurrentUserAsync(GetUserId(), GetHouseholdId(), cancellationToken));
+        return Ok(await usersService.GetCurrentUserAsync(
+            GetUserId(), currentHouseholdAccessor.HouseholdId, cancellationToken));
     }
 
     [HttpGet("me/households")]
@@ -38,7 +42,8 @@ public sealed class UsersController(UsersService usersService) : ControllerBase
         // ConflictException (email already in use) and BusinessRuleViolationException
         // (password policy) are caught by DomainExceptionHandler and mapped to 409/400
         // ProblemDetails responses respectively.
-        var response = await usersService.CreateMemberAsync(request, GetHouseholdId(), cancellationToken);
+        var response = await usersService.CreateMemberAsync(
+            request, currentHouseholdAccessor.HouseholdId, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, response);
     }
@@ -57,6 +62,4 @@ public sealed class UsersController(UsersService usersService) : ControllerBase
     }
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-    private Guid GetHouseholdId() => Guid.Parse(User.FindFirstValue("household_id")!);
 }
