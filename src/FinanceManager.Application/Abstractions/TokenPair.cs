@@ -1,3 +1,3 @@
 namespace FinanceManager.Application.Abstractions;
 
-public sealed record TokenPair(string AccessToken, string RefreshToken);
+public sealed record TokenPair(string AccessToken, string RefreshToken, Guid? HouseholdId);

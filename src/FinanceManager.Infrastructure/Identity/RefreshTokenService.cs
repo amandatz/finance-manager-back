@@ -17,8 +17,8 @@ public sealed class RefreshTokenService(
 
     public async Task<TokenPair> IssueTokensAsync(
         Guid userId,
-        Guid householdId,
-        HouseholdRole role,
+        Guid? householdId,
+        HouseholdRole? role,
         CancellationToken cancellationToken)
     {
         var accessToken = tokenGenerator.GenerateAccessToken(userId, householdId, role);
@@ -38,7 +38,7 @@ public sealed class RefreshTokenService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new TokenPair(accessToken, rawToken);
+        return new TokenPair(accessToken, rawToken, householdId);
     }
 
     public async Task<TokenPair?> RefreshAsync(string refreshToken, CancellationToken cancellationToken)
@@ -106,7 +106,7 @@ public sealed class RefreshTokenService(
             return null;
         }
 
-        return new TokenPair(accessToken, rawToken);
+        return new TokenPair(accessToken, rawToken, record.HouseholdId);
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken)

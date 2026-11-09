@@ -13,11 +13,12 @@ public sealed class RefreshToken
 
     /// <summary>
     /// Snapshot of the household/role this session was issued for. Rotation carries it forward
-    /// unchanged; it never re-derives from live membership state.
+    /// unchanged; it never re-derives from live membership state. Null when the session has no
+    /// active household yet.
     /// </summary>
-    public Guid HouseholdId { get; set; }
+    public Guid? HouseholdId { get; set; }
 
-    public HouseholdRole Role { get; set; }
+    public HouseholdRole? Role { get; set; }
 
     public string TokenHash { get; set; } = null!;
 

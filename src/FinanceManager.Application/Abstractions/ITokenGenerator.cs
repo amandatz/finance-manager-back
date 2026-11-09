@@ -4,5 +4,5 @@ namespace FinanceManager.Application.Abstractions;
 
 public interface ITokenGenerator
 {
-    string GenerateAccessToken(Guid userId, Guid householdId, HouseholdRole role);
+    string GenerateAccessToken(Guid userId, Guid? householdId, HouseholdRole? role);
 }
