@@ -6,8 +6,8 @@ public interface IRefreshTokenService
 {
     Task<TokenPair> IssueTokensAsync(
         Guid userId,
-        Guid householdId,
-        HouseholdRole role,
+        Guid? householdId,
+        HouseholdRole? role,
         CancellationToken cancellationToken);
 
     /// <summary>

@@ -308,7 +308,7 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("expires_at");
 
-                    b.Property<Guid>("HouseholdId")
+                    b.Property<Guid?>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");
 
@@ -321,7 +321,7 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at");
 
-                    b.Property<int>("Role")
+                    b.Property<int?>("Role")
                         .HasColumnType("integer")
                         .HasColumnName("role");
 

@@ -10,19 +10,24 @@ namespace FinanceManager.Infrastructure.Identity;
 
 public sealed class JwtTokenGenerator(IConfiguration configuration) : ITokenGenerator
 {
-    public string GenerateAccessToken(Guid userId, Guid householdId, HouseholdRole role)
+    public string GenerateAccessToken(Guid userId, Guid? householdId, HouseholdRole? role)
     {
         var signingKey = configuration["Jwt:SigningKey"]
             ?? throw new InvalidOperationException("Missing required configuration: Jwt:SigningKey");
         var issuer = configuration["Jwt:Issuer"]
             ?? throw new InvalidOperationException("Missing required configuration: Jwt:Issuer");
 
-        var claims = new[]
+        var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, userId.ToString()) };
+
+        if (householdId is not null)
         {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim("household_id", householdId.ToString()),
-            new Claim(ClaimTypes.Role, role.ToString()),
-        };
+            claims.Add(new Claim("household_id", householdId.Value.ToString()));
+        }
+
+        if (role is not null)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.Value.ToString()));
+        }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
