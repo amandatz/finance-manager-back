@@ -104,6 +104,20 @@ public class CreateMemberTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateMember_WithNoActiveHousehold_Returns403()
+    {
+        // No active household means no role claim either, so [Authorize(Roles = Owner)]
+        // denies the request before the controller (and GetHouseholdId) ever runs.
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+
+        var response = await client.PostAsJsonAsync(
+            Route,
+            new CreateMemberRequest("No Household", "no-household@test.local", "SomePassword123"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task CreateMember_WithNameOver100Chars_Returns400()
     {
         var client = _factory.CreateClient();

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.Households;
 using FinanceManager.Application.Households.Requests;
 using FinanceManager.Application.Households.Responses;
@@ -12,13 +13,16 @@ namespace FinanceManager.Api.Features.Households;
 [ApiController]
 [Route("api/v1/households")]
 [Authorize]
-public sealed class HouseholdsController(HouseholdsService householdsService) : ControllerBase
+public sealed class HouseholdsController(
+    HouseholdsService householdsService,
+    ICurrentHouseholdAccessor currentHouseholdAccessor) : ControllerBase
 {
     [HttpPost("invite-code")]
     [Authorize(Roles = nameof(HouseholdRole.Owner))]
     public async Task<ActionResult<InviteCodeResponse>> GenerateInviteCode(CancellationToken cancellationToken)
     {
-        return Ok(await householdsService.GenerateInviteCodeAsync(GetHouseholdId(), cancellationToken));
+        return Ok(await householdsService.GenerateInviteCodeAsync(
+            currentHouseholdAccessor.HouseholdId, cancellationToken));
     }
 
     [HttpPost("join")]
@@ -33,6 +37,4 @@ public sealed class HouseholdsController(HouseholdsService householdsService) : 
     }
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-    private Guid GetHouseholdId() => Guid.Parse(User.FindFirstValue("household_id")!);
 }
