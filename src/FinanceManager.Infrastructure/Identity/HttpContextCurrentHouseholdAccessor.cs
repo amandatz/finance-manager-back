@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FinanceManager.Application.Abstractions;
+using FinanceManager.Domain.Exceptions;
 using Microsoft.AspNetCore.Http;
 
 namespace FinanceManager.Infrastructure.Identity;
@@ -18,8 +19,11 @@ public sealed class HttpContextCurrentHouseholdAccessor(IHttpContextAccessor htt
 
             if (string.IsNullOrEmpty(claimValue) || !Guid.TryParse(claimValue, out var householdId))
             {
-                throw new InvalidOperationException(
-                    "No authenticated household context is available for the current request.");
+                // The household_id claim is optional on the token (a user with no active
+                // household, e.g. removed from every household, gets one without it) - this
+                // is an expected, client-facing outcome, not a server bug, so it maps to 401
+                // rather than falling through to GlobalExceptionHandler as a 500.
+                throw new AuthenticationFailedException("No active household for the current user.");
             }
 
             return householdId;

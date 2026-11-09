@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.FinancialAccounts;
 using FinanceManager.Application.FinancialAccounts.Requests;
 using FinanceManager.Application.FinancialAccounts.Responses;
@@ -10,14 +11,17 @@ namespace FinanceManager.Api.Features.FinancialAccounts;
 [ApiController]
 [Route("api/v1/financial-accounts")]
 [Authorize]
-public sealed class FinancialAccountsController(FinancialAccountsService service) : ControllerBase
+public sealed class FinancialAccountsController(
+    FinancialAccountsService service,
+    ICurrentHouseholdAccessor currentHouseholdAccessor) : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<FinancialAccountResponse>> Create(
         CreateFinancialAccountRequest request,
         CancellationToken cancellationToken)
     {
-        var response = await service.CreateAsync(request, GetHouseholdId(), GetUserId(), cancellationToken);
+        var response = await service.CreateAsync(
+            request, currentHouseholdAccessor.HouseholdId, GetUserId(), cancellationToken);
 
         return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
@@ -62,6 +66,4 @@ public sealed class FinancialAccountsController(FinancialAccountsService service
     }
 
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
-    private Guid GetHouseholdId() => Guid.Parse(User.FindFirstValue("household_id")!);
 }

@@ -1,5 +1,8 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
 using FinanceManager.Infrastructure.Identity;
@@ -82,6 +85,26 @@ public class UserHouseholdApiFactory : InMemoryDbApiFactory
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
         return client;
+    }
+
+    /// <summary>
+    /// Logs in as the seed owner, then mints a fresh access token for the same user but
+    /// with no <c>household_id</c>/role claims - simulating a user with no active household
+    /// (e.g. removed from every household), which the real token issuer also produces for.
+    /// </summary>
+    public async Task<HttpClient> CreateClientWithNoHouseholdTokenAsync()
+    {
+        var loginClient = CreateClient();
+        var ownerToken = await LoginAsOwnerAsync(loginClient);
+        var userId = Guid.Parse(
+            new JwtSecurityTokenHandler().ReadJwtToken(ownerToken).Claims
+                .First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+
+        using var scope = Services.CreateScope();
+        var tokenGenerator = scope.ServiceProvider.GetRequiredService<ITokenGenerator>();
+        var tokenWithoutHousehold = tokenGenerator.GenerateAccessToken(userId, householdId: null, role: null);
+
+        return CreateAuthenticatedClient(tokenWithoutHousehold);
     }
 
     public async Task<RefreshToken?> FindRefreshTokenAsync(string rawToken)

@@ -29,6 +29,17 @@ public class CreateTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_WithNoActiveHousehold_Returns401()
+    {
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+        var request = new CreateCreditCardRequest(1000m, 10, 20, "Visa", null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Create_WithValidRequest_Returns201WithLocationAndBody()
     {
         var (client, userId, _) = await _factory.CreateAuthenticatedOwnerAsync();

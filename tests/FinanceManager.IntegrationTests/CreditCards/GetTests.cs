@@ -63,6 +63,16 @@ public class GetTests : IDisposable
     }
 
     [Fact]
+    public async Task GetAll_WithNoActiveHousehold_Returns401()
+    {
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+
+        var response = await client.GetAsync(Route);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetAll_WithActiveCards_ReturnsThem()
     {
         var (client, userId, householdId) = await _factory.CreateAuthenticatedOwnerAsync();

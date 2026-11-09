@@ -8,6 +8,6 @@ public interface ICurrentHouseholdAccessor
     /// <summary>
     /// The current request's household id.
     /// </summary>
-    /// <exception cref="InvalidOperationException">No authenticated household context is available.</exception>
+    /// <exception cref="FinanceManager.Domain.Exceptions.AuthenticationFailedException">No authenticated household context is available.</exception>
     Guid HouseholdId { get; }
 }
