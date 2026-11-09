@@ -47,6 +47,17 @@ public class CreateTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_WithNoActiveHousehold_Returns401()
+    {
+        var client = await _factory.CreateClientWithNoHouseholdTokenAsync();
+        var request = new CreateFinancialAccountRequest("Checking", FinancialAccountType.Bank, "Bank of Test");
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Create_WithValidRequest_Returns201WithLocationAndBody()
     {
         var client = await CreateAuthenticatedOwnerClientAsync();
