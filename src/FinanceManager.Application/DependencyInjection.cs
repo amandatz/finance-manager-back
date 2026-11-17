@@ -1,6 +1,8 @@
+using FinanceManager.Application.Categories;
 using FinanceManager.Application.CreditCards;
 using FinanceManager.Application.FinancialAccounts;
 using FinanceManager.Application.Households;
+using FinanceManager.Application.Transactions;
 using FinanceManager.Application.Users;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +22,8 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<UsersService>();
         services.AddScoped<HouseholdsService>();
+        services.AddScoped<CategoriesService>();
+        services.AddScoped<TransactionsService>();
 
         return services;
     }

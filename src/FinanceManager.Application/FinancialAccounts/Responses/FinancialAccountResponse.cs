@@ -8,6 +8,7 @@ public sealed record FinancialAccountResponse(
     FinancialAccountType Type,
     string? InstitutionName,
     IReadOnlyCollection<Guid> OwnerUserIds,
+    decimal Balance,
     bool IsActive,
     DateTime CreatedAt,
     DateTime? UpdatedAt);

@@ -6,7 +6,9 @@ using FinanceManager.Domain.Repositories;
 
 namespace FinanceManager.Application.FinancialAccounts;
 
-public sealed class FinancialAccountsService(IFinancialAccountRepository repository)
+public sealed class FinancialAccountsService(
+    IFinancialAccountRepository repository,
+    ITransactionRepository transactionRepository)
 {
     public async Task<FinancialAccountResponse> CreateAsync(
         CreateFinancialAccountRequest request,
@@ -24,7 +26,7 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
         await repository.AddAsync(account, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
 
-        return Map(account);
+        return await MapAsync(account, cancellationToken);
     }
 
     public async Task<IReadOnlyList<FinancialAccountResponse>> GetAllAsync(
@@ -37,11 +39,18 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
         // mutation (Update/Delete) is further restricted to owners (see GetOwnedOrThrowAsync).
         var accounts = await repository.GetAllAsync(cancellationToken);
 
-        return accounts
+        var active = accounts
             .Where(x => x.IsActive)
             .OrderBy(x => x.Name, StringComparer.Ordinal)
-            .Select(Map)
             .ToList();
+
+        var responses = new List<FinancialAccountResponse>(active.Count);
+        foreach (var account in active)
+        {
+            responses.Add(await MapAsync(account, cancellationToken));
+        }
+
+        return responses;
     }
 
     public async Task<FinancialAccountResponse> GetByIdAsync(
@@ -50,7 +59,7 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
     {
         var account = await GetActiveOrThrowAsync(id, cancellationToken);
 
-        return Map(account);
+        return await MapAsync(account, cancellationToken);
     }
 
     public async Task<FinancialAccountResponse> UpdateAsync(
@@ -64,7 +73,7 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
         account.Update(request.Name, request.Type, request.InstitutionName);
         await repository.SaveChangesAsync(cancellationToken);
 
-        return Map(account);
+        return await MapAsync(account, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, Guid requestingUserId, CancellationToken cancellationToken)
@@ -96,14 +105,19 @@ public sealed class FinancialAccountsService(IFinancialAccountRepository reposit
         return account.IsOwnedBy(requestingUserId) ? account : throw NotFoundException.For(nameof(FinancialAccount), id);
     }
 
-    private static FinancialAccountResponse Map(FinancialAccount account) =>
-        new(
+    private async Task<FinancialAccountResponse> MapAsync(FinancialAccount account, CancellationToken cancellationToken)
+    {
+        var balance = await transactionRepository.GetAccountBalanceAsync(account.Id, cancellationToken);
+
+        return new FinancialAccountResponse(
             account.Id,
             account.Name,
             account.Type,
             account.InstitutionName,
             account.OwnerUserIds,
+            balance,
             account.IsActive,
             account.CreatedAt,
             account.UpdatedAt);
+    }
 }
