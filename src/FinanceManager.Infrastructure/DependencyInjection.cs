@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<IFinancialAccountRepository, FinancialAccountRepository>();
         services.AddScoped<ICreditCardRepository, CreditCardRepository>();
         services.AddScoped<IHouseholdRepository, HouseholdRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
+        services.AddScoped<ITransactionRepository, TransactionRepository>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
             {

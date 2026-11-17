@@ -23,6 +23,48 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("FinanceManager.Domain.Entities.Category", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_categories");
+
+                    b.HasIndex("HouseholdId")
+                        .HasDatabaseName("ix_categories_household_id");
+
+                    b.ToTable("categories", (string)null);
+                });
+
             modelBuilder.Entity("FinanceManager.Domain.Entities.CreditCard", b =>
                 {
                     b.Property<Guid>("Id")
@@ -171,6 +213,86 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_households_invite_code");
 
                     b.ToTable("households", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceManager.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("currency");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid>("FinancialAccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("financial_account_id");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_active");
+
+                    b.Property<bool?>("IsHouseholdExpense")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_household_expense");
+
+                    b.Property<Guid>("RecordedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by_user_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_transactions");
+
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_transactions_category_id");
+
+                    b.HasIndex("Date")
+                        .HasDatabaseName("ix_transactions_date");
+
+                    b.HasIndex("FinancialAccountId")
+                        .HasDatabaseName("ix_transactions_financial_account_id");
+
+                    b.HasIndex("HouseholdId")
+                        .HasDatabaseName("ix_transactions_household_id");
+
+                    b.ToTable("transactions", (string)null);
                 });
 
             modelBuilder.Entity("FinanceManager.Infrastructure.Identity.ApplicationUser", b =>

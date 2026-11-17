@@ -12,6 +12,7 @@ namespace FinanceManager.Application.Users;
 public sealed class AuthService(
     IIdentityService identityService,
     IHouseholdRepository householdRepository,
+    ICategoryRepository categoryRepository,
     IRefreshTokenService refreshTokenService)
 {
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -74,6 +75,13 @@ public sealed class AuthService(
             await householdRepository.AddAsync(household, cancellationToken);
             await householdRepository.SaveChangesAsync(cancellationToken);
             role = HouseholdRole.Owner;
+
+            foreach (var category in CategorySeed.CreateDefaults(household.Id))
+            {
+                await categoryRepository.AddAsync(category, cancellationToken);
+            }
+
+            await categoryRepository.SaveChangesAsync(cancellationToken);
         }
         else
         {
