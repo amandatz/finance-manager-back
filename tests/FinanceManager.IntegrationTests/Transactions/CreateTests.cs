@@ -133,6 +133,40 @@ public class CreateTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_WithTwoDecimalPlacesAmount_Returns201()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
+        var request = new CreateTransactionRequest(
+            account.Id, category.Id, TransactionType.Expense, 10.10m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.Equal(10.10m, body!.Amount);
+    }
+
+    [Fact]
+    public async Task Create_WithMoreThanTwoDecimalPlacesAmount_Returns400()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
+        var request = new CreateTransactionRequest(
+            account.Id, category.Id, TransactionType.Expense, 10.126m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
+        Assert.Contains("Amount", problem!.Errors.Keys);
+    }
+
+    [Fact]
     public async Task Create_WithNonBrlCurrency_Returns400()
     {
         var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
