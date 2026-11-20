@@ -6,6 +6,7 @@ using FinanceManager.Application.Transactions.Requests;
 using FinanceManager.Application.Transactions.Responses;
 using FinanceManager.Domain.Entities;
 using FinanceManager.Domain.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceManager.IntegrationTests.Transactions;
 
@@ -85,6 +86,46 @@ public class UpdateAndDeleteTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
         Assert.Equal(ownerId, body!.RecordedByUserId);
+    }
+
+    [Fact]
+    public async Task Update_WithTwoDecimalPlacesAmount_Returns200()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
+        var transaction = await _factory.SeedTransactionAsync(new Transaction(
+            account.Id, category.Id, userId, TransactionType.Expense, 50m, "BRL",
+            new DateOnly(2026, 11, 16), householdId));
+        var request = new UpdateTransactionRequest(
+            category.Id, TransactionType.Expense, 20.10m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{transaction.Id}", request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.Equal(20.10m, body!.Amount);
+    }
+
+    [Fact]
+    public async Task Update_WithMoreThanTwoDecimalPlacesAmount_Returns400()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
+        var transaction = await _factory.SeedTransactionAsync(new Transaction(
+            account.Id, category.Id, userId, TransactionType.Expense, 50m, "BRL",
+            new DateOnly(2026, 11, 16), householdId));
+        var request = new UpdateTransactionRequest(
+            category.Id, TransactionType.Expense, 20.555m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{transaction.Id}", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
+        Assert.Contains("Amount", problem!.Errors.Keys);
     }
 
     [Fact]

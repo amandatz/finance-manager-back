@@ -17,12 +17,19 @@ public sealed class CreateTransactionRequestValidator : AbstractValidator<Create
             .IsInEnum();
 
         RuleFor(x => x.Amount)
-            .GreaterThan(0);
+            .GreaterThan(0)
+            .Must(HaveAtMostTwoDecimalPlaces)
+            .WithMessage("Amount must have at most 2 decimal places.");
 
         RuleFor(x => x.Currency)
             .Equal(Transaction.SupportedCurrency);
 
         RuleFor(x => x.Description)
             .MaximumLength(Transaction.DescriptionMaxLength);
+    }
+
+    private static bool HaveAtMostTwoDecimalPlaces(decimal amount)
+    {
+        return decimal.Round(amount, 2) == amount;
     }
 }
