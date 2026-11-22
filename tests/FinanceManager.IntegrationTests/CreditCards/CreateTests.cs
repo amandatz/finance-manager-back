@@ -161,4 +161,57 @@ public class CreateTests : IDisposable
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Create_WithoutColor_DefaultsToGraphite()
+    {
+        var (client, _, _) = await _factory.CreateAuthenticatedOwnerAsync();
+        var request = new CreateCreditCardRequest(1000m, 10, 20, "Visa", null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+        Assert.Equal(CreditCardColor.Graphite, body!.Color);
+    }
+
+    [Theory]
+    [InlineData(CreditCardColor.Graphite)]
+    [InlineData(CreditCardColor.Violet)]
+    [InlineData(CreditCardColor.Teal)]
+    [InlineData(CreditCardColor.Sapphire)]
+    [InlineData(CreditCardColor.Emerald)]
+    [InlineData(CreditCardColor.Rose)]
+    public async Task Create_WithEachValidColor_Returns201WithThatColor(CreditCardColor color)
+    {
+        var (client, _, _) = await _factory.CreateAuthenticatedOwnerAsync();
+        var request = new CreateCreditCardRequest(1000m, 10, 20, "Visa", null, color);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+        Assert.Equal(color, body!.Color);
+    }
+
+    [Fact]
+    public async Task Create_WithInvalidColor_Returns400()
+    {
+        var (client, _, _) = await _factory.CreateAuthenticatedOwnerAsync();
+        var payload = new
+        {
+            creditLimit = 1000m,
+            statementClosingDay = 10,
+            paymentDueDay = 20,
+            brand = "Visa",
+            settlementAccountId = (Guid?)null,
+            color = 99,
+        };
+
+        var response = await client.PostAsJsonAsync(Route, payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(TestJsonOptions.Default);
+        Assert.Contains("Color", problem!.Errors.Keys);
+    }
 }

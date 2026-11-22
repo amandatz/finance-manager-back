@@ -1,4 +1,5 @@
 using FinanceManager.Domain.Common;
+using FinanceManager.Domain.Enums;
 using FinanceManager.Domain.Exceptions;
 
 namespace FinanceManager.Domain.Entities;
@@ -23,7 +24,8 @@ public sealed class CreditCard : HouseholdScopedOwnedEntity
         int statementClosingDay,
         int paymentDueDay,
         string? brand = null,
-        Guid? settlementAccountId = null)
+        Guid? settlementAccountId = null,
+        CreditCardColor color = CreditCardColor.Graphite)
         : base(householdId, ownerUserId)
     {
         ValidateBrand(brand);
@@ -31,12 +33,14 @@ public sealed class CreditCard : HouseholdScopedOwnedEntity
         ValidateDay(statementClosingDay, nameof(statementClosingDay));
         ValidateDay(paymentDueDay, nameof(paymentDueDay));
         ValidateDaysDiffer(statementClosingDay, paymentDueDay);
+        ValidateColor(color);
 
         Brand = brand;
         CreditLimit = creditLimit;
         StatementClosingDay = statementClosingDay;
         PaymentDueDay = paymentDueDay;
         SettlementAccountId = settlementAccountId;
+        Color = color;
     }
 
     public string? Brand { get; private set; }
@@ -52,24 +56,29 @@ public sealed class CreditCard : HouseholdScopedOwnedEntity
     /// </summary>
     public Guid? SettlementAccountId { get; private set; }
 
+    public CreditCardColor Color { get; private set; }
+
     public void Update(
         decimal creditLimit,
         int statementClosingDay,
         int paymentDueDay,
         string? brand,
-        Guid? settlementAccountId)
+        Guid? settlementAccountId,
+        CreditCardColor color = CreditCardColor.Graphite)
     {
         ValidateBrand(brand);
         ValidateCreditLimit(creditLimit);
         ValidateDay(statementClosingDay, nameof(statementClosingDay));
         ValidateDay(paymentDueDay, nameof(paymentDueDay));
         ValidateDaysDiffer(statementClosingDay, paymentDueDay);
+        ValidateColor(color);
 
         Brand = brand;
         CreditLimit = creditLimit;
         StatementClosingDay = statementClosingDay;
         PaymentDueDay = paymentDueDay;
         SettlementAccountId = settlementAccountId;
+        Color = color;
         MarkAsUpdated();
     }
 
@@ -108,6 +117,14 @@ public sealed class CreditCard : HouseholdScopedOwnedEntity
             throw new DomainValidationException(
                 "PaymentDueDay must be different from StatementClosingDay.",
                 nameof(paymentDueDay));
+        }
+    }
+
+    private static void ValidateColor(CreditCardColor color)
+    {
+        if (!Enum.IsDefined(color))
+        {
+            throw new DomainValidationException("Color is not a valid CreditCardColor.", nameof(color));
         }
     }
 

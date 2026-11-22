@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using FinanceManager.Application.CreditCards.Responses;
 using FinanceManager.Domain.Entities;
+using FinanceManager.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceManager.IntegrationTests.CreditCards;
@@ -96,5 +97,20 @@ public class GetTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<List<CreditCardResponse>>(TestJsonOptions.Default);
         Assert.Empty(body!);
+    }
+
+    [Fact]
+    public async Task GetById_WithCardSeededWithoutExplicitColor_ReturnsGraphite()
+    {
+        // Mirrors a pre-task-026 card: the entity constructor's `color` default kicks in
+        // the same way an existing row backfilled to the default by the migration would.
+        var (client, userId, householdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var card = await _factory.SeedCreditCardAsync(new CreditCard(householdId, userId, 1000m, 10, 20, "Visa"));
+
+        var response = await client.GetAsync($"{Route}/{card.Id}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+        Assert.Equal(CreditCardColor.Graphite, body!.Color);
     }
 }

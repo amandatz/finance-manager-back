@@ -18,5 +18,8 @@ public sealed class CreateCreditCardRequestValidator : AbstractValidator<CreateC
 
         RuleFor(x => x.Brand)
             .MaximumLength(CreditCard.BrandMaxLength);
+
+        RuleFor(x => x.Color)
+            .IsInEnum();
     }
 }

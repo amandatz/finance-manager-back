@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using FinanceManager.Application.CreditCards.Requests;
 using FinanceManager.Application.CreditCards.Responses;
 using FinanceManager.Domain.Entities;
+using FinanceManager.Domain.Enums;
 
 namespace FinanceManager.IntegrationTests.CreditCards;
 
@@ -87,5 +88,60 @@ public class UpdateTests : IDisposable
         var response = await memberClient.GetAsync($"{Route}/{card.Id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Update_WithoutColor_DefaultsToGraphite()
+    {
+        var (client, userId, householdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var card = await _factory.SeedCreditCardAsync(
+            new CreditCard(householdId, userId, 1000m, 10, 20, "Visa", color: CreditCardColor.Rose));
+        var request = new UpdateCreditCardRequest(2000m, 5, 15, "Mastercard", null);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{card.Id}", request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+        Assert.Equal(CreditCardColor.Graphite, body!.Color);
+    }
+
+    [Theory]
+    [InlineData(CreditCardColor.Graphite)]
+    [InlineData(CreditCardColor.Violet)]
+    [InlineData(CreditCardColor.Teal)]
+    [InlineData(CreditCardColor.Sapphire)]
+    [InlineData(CreditCardColor.Emerald)]
+    [InlineData(CreditCardColor.Rose)]
+    public async Task Update_WithEachValidColor_Returns200WithThatColor(CreditCardColor color)
+    {
+        var (client, userId, householdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var card = await _factory.SeedCreditCardAsync(new CreditCard(householdId, userId, 1000m, 10, 20, "Visa"));
+        var request = new UpdateCreditCardRequest(1000m, 10, 20, "Visa", null, color);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{card.Id}", request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+        Assert.Equal(color, body!.Color);
+    }
+
+    [Fact]
+    public async Task Update_WithInvalidColor_Returns400()
+    {
+        var (client, userId, householdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var card = await _factory.SeedCreditCardAsync(new CreditCard(householdId, userId, 1000m, 10, 20, "Visa"));
+        var payload = new
+        {
+            creditLimit = 1000m,
+            statementClosingDay = 10,
+            paymentDueDay = 20,
+            brand = "Visa",
+            settlementAccountId = (Guid?)null,
+            color = 99,
+        };
+
+        var response = await client.PutAsJsonAsync($"{Route}/{card.Id}", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }

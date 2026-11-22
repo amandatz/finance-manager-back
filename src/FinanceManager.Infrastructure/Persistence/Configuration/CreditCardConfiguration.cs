@@ -1,4 +1,5 @@
 using FinanceManager.Domain.Entities;
+using FinanceManager.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,6 +16,10 @@ internal sealed class CreditCardConfiguration : IEntityTypeConfiguration<CreditC
 
         builder.Property(x => x.CreditLimit)
             .HasColumnType("decimal(18,2)");
+
+        builder.Property(x => x.Color)
+            .IsRequired()
+            .HasDefaultValue(CreditCardColor.Graphite);
 
         builder.ConfigureHouseholdScopedOwnedEntity();
     }
