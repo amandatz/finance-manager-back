@@ -71,17 +71,19 @@ public sealed class AuthService(
 
         if (string.IsNullOrWhiteSpace(request.InviteCode))
         {
+            // Household and its seed categories are only staged here (AddAsync, no save).
+            // CreateUserAsync's own SaveChangesAsync below is what actually commits them -
+            // together with the user and membership - in a single flush against the same
+            // scoped DbContext, so a failure there (e.g. duplicate email) leaves nothing
+            // persisted instead of orphaning the household and its categories.
             household = new Household(request.HouseholdName!);
             await householdRepository.AddAsync(household, cancellationToken);
-            await householdRepository.SaveChangesAsync(cancellationToken);
             role = HouseholdRole.Owner;
 
             foreach (var category in CategorySeed.CreateDefaults(household.Id))
             {
                 await categoryRepository.AddAsync(category, cancellationToken);
             }
-
-            await categoryRepository.SaveChangesAsync(cancellationToken);
         }
         else
         {

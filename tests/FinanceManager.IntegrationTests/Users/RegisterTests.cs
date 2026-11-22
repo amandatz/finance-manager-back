@@ -6,7 +6,10 @@ using FinanceManager.Application.Households;
 using FinanceManager.Application.Households.Responses;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
+using FinanceManager.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FinanceManager.IntegrationTests.Users;
 
@@ -173,5 +176,36 @@ public class RegisterTests : IDisposable
             new RegisterRequest("Startup Check", "startup-check@test.local", "StartupCheckPassword123", null, "Startup Household"));
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Register_WithDuplicateEmailAndNoInviteCode_DoesNotPersistOrphanedHouseholdOrCategories()
+    {
+        var client = _factory.CreateClient();
+        await _factory.EnsureOwnerRegisteredAsync(client);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
+        var householdCountBefore = await dbContext.Households.CountAsync();
+        var categoryCountBefore = await dbContext.Categories.IgnoreQueryFilters().CountAsync();
+
+        const string orphanHouseholdName = "Orphan Household Attempt";
+        var response = await client.PostAsJsonAsync(
+            Route,
+            new RegisterRequest(
+                "Dup No Invite",
+                UserHouseholdApiFactory.SeedOwnerEmail,
+                "DupNoInvitePassword123",
+                null,
+                orphanHouseholdName));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        var householdCountAfter = await dbContext.Households.CountAsync();
+        var categoryCountAfter = await dbContext.Categories.IgnoreQueryFilters().CountAsync();
+
+        Assert.Equal(householdCountBefore, householdCountAfter);
+        Assert.Equal(categoryCountBefore, categoryCountAfter);
+        Assert.False(await dbContext.Households.AnyAsync(h => h.Name == orphanHouseholdName));
     }
 }
