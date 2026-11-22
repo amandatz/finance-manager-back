@@ -34,6 +34,17 @@ public interface ITransactionRepository
         Guid settlementGroupId,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// Active income and household-expense totals per <see cref="Transaction.RecordedByUserId"/>,
+    /// for every member who recorded at least one such transaction within <paramref name="dateFrom"/>
+    /// and <paramref name="dateTo"/> (inclusive) - used by the household expense split report.
+    /// A member with no matching transactions at all is absent from the result, not zero.
+    /// </summary>
+    Task<IReadOnlyList<MemberTransactionTotals>> GetMemberTotalsAsync(
+        DateOnly dateFrom,
+        DateOnly dateTo,
+        CancellationToken cancellationToken);
+
     Task AddAsync(
         Transaction transaction,
         CancellationToken cancellationToken);

@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<AuthService>();
         services.AddScoped<UsersService>();
         services.AddScoped<HouseholdsService>();
+        services.AddScoped<HouseholdExpenseSplitService>();
         services.AddScoped<CategoriesService>();
         services.AddScoped<TransactionsService>();
 

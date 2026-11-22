@@ -16,7 +16,7 @@ public sealed class CategoriesService(ICategoryRepository repository)
     {
         await EnsureNameNotTakenAsync(householdId, request.Name, request.Type, excludeId: null, cancellationToken);
 
-        var category = new Category(request.Name, request.Type, householdId);
+        var category = new Category(request.Name, request.Type, householdId, request.DefaultIsHouseholdExpense);
 
         await repository.AddAsync(category, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -57,7 +57,7 @@ public sealed class CategoriesService(ICategoryRepository repository)
         await EnsureNameNotTakenAsync(
             category.HouseholdId, request.Name, request.Type, excludeId: id, cancellationToken);
 
-        category.Update(request.Name, request.Type);
+        category.Update(request.Name, request.Type, request.DefaultIsHouseholdExpense);
         await repository.SaveChangesAsync(cancellationToken);
 
         return Map(category);
@@ -98,6 +98,7 @@ public sealed class CategoriesService(ICategoryRepository repository)
             category.Id,
             category.Name,
             category.Type,
+            category.DefaultIsHouseholdExpense,
             category.IsActive,
             category.CreatedAt,
             category.UpdatedAt);

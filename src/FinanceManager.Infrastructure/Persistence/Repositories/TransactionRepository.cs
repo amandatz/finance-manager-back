@@ -89,6 +89,45 @@ public sealed class TransactionRepository(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<MemberTransactionTotals>> GetMemberTotalsAsync(
+        DateOnly dateFrom,
+        DateOnly dateTo,
+        CancellationToken cancellationToken)
+    {
+        var inPeriod = context.Transactions
+            .Where(x => x.IsActive && x.Date >= dateFrom && x.Date <= dateTo);
+
+        var incomeTotals = await inPeriod
+            .Where(x => x.Type == TransactionType.Income)
+            .GroupBy(x => x.RecordedByUserId)
+            .Select(g => new { UserId = g.Key, Total = g.Sum(x => x.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var householdExpenseTotals = await inPeriod
+            .Where(x => x.Type == TransactionType.Expense && x.IsHouseholdExpense == true)
+            .GroupBy(x => x.RecordedByUserId)
+            .Select(g => new { UserId = g.Key, Total = g.Sum(x => x.Amount) })
+            .ToListAsync(cancellationToken);
+
+        var userIds = incomeTotals.Select(x => x.UserId)
+            .Union(householdExpenseTotals.Select(x => x.UserId));
+
+        return userIds
+            .Select(userId =>
+            {
+                var income = incomeTotals.FirstOrDefault(x => x.UserId == userId);
+                var householdExpense = householdExpenseTotals.FirstOrDefault(x => x.UserId == userId);
+
+                return new MemberTransactionTotals(
+                    userId,
+                    income?.Total ?? 0m,
+                    income is not null,
+                    householdExpense?.Total ?? 0m,
+                    householdExpense is not null);
+            })
+            .ToList();
+    }
+
     public async Task AddAsync(
         Transaction transaction,
         CancellationToken cancellationToken)

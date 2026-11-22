@@ -4,4 +4,5 @@ namespace FinanceManager.Application.Categories.Requests;
 
 public sealed record CreateCategoryRequest(
     string Name,
-    CategoryType Type);
+    CategoryType Type,
+    bool DefaultIsHouseholdExpense = false);

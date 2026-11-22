@@ -22,6 +22,8 @@ public sealed class TransactionsService(
         var category = await GetActiveCategoryOrThrowAsync(request.CategoryId, cancellationToken);
         EnsureTypeMatchesCategory(request.Type, category);
 
+        var isHouseholdExpense = ResolveIsHouseholdExpense(request.Type, request.IsHouseholdExpense, category);
+
         Transaction transaction;
 
         if (request.CreditCardId is { } creditCardId)
@@ -38,7 +40,7 @@ public sealed class TransactionsService(
                 request.Date,
                 householdId,
                 request.Description,
-                request.IsHouseholdExpense);
+                isHouseholdExpense);
         }
         else
         {
@@ -54,7 +56,7 @@ public sealed class TransactionsService(
                 request.Date,
                 householdId,
                 request.Description,
-                request.IsHouseholdExpense);
+                isHouseholdExpense);
         }
 
         await repository.AddAsync(transaction, cancellationToken);
@@ -95,6 +97,8 @@ public sealed class TransactionsService(
         var category = await GetActiveCategoryOrThrowAsync(request.CategoryId, cancellationToken);
         EnsureTypeMatchesCategory(request.Type, category);
 
+        var isHouseholdExpense = ResolveIsHouseholdExpense(request.Type, request.IsHouseholdExpense, category);
+
         transaction.Update(
             request.CategoryId,
             request.Type,
@@ -102,7 +106,7 @@ public sealed class TransactionsService(
             request.Currency,
             request.Date,
             request.Description,
-            request.IsHouseholdExpense);
+            isHouseholdExpense);
         await repository.SaveChangesAsync(cancellationToken);
 
         return Map(transaction);
@@ -157,6 +161,17 @@ public sealed class TransactionsService(
         var category = await categoryRepository.GetByIdAsync(categoryId, cancellationToken);
 
         return category is { IsActive: true } ? category : throw NotFoundException.For(nameof(Category), categoryId);
+    }
+
+    private static bool? ResolveIsHouseholdExpense(
+        TransactionType type, bool? requestedIsHouseholdExpense, Category category)
+    {
+        if (requestedIsHouseholdExpense is not null)
+        {
+            return requestedIsHouseholdExpense;
+        }
+
+        return type == TransactionType.Expense ? category.DefaultIsHouseholdExpense : null;
     }
 
     private static void EnsureTypeMatchesCategory(TransactionType type, Category category)

@@ -180,7 +180,9 @@ public sealed class Transaction : HouseholdScopedEntity
     public string? Description { get; private set; }
 
     /// <summary>
-    /// Reserved for a future household-expense-split feature; carries no business rule yet.
+    /// Null only for income and settlement legs, which have no personal/household distinction.
+    /// For an expense, defaults from <see cref="Category.DefaultIsHouseholdExpense"/> when not
+    /// set explicitly - see <see cref="Application.Transactions.TransactionsService"/>.
     /// </summary>
     public bool? IsHouseholdExpense { get; private set; }
 

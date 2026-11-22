@@ -255,4 +255,72 @@ public class CreateTests : IDisposable
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Create_ExpenseWithoutIsHouseholdExpense_InheritsCategoryDefaultTrue()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(
+            new Category("Luz", CategoryType.Expense, householdId, defaultIsHouseholdExpense: true));
+        var request = new CreateTransactionRequest(
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.True(body!.IsHouseholdExpense);
+    }
+
+    [Fact]
+    public async Task Create_ExpenseWithoutIsHouseholdExpense_InheritsCategoryDefaultFalse()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(
+            new Category("Lazer", CategoryType.Expense, householdId, defaultIsHouseholdExpense: false));
+        var request = new CreateTransactionRequest(
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.False(body!.IsHouseholdExpense);
+    }
+
+    [Fact]
+    public async Task Create_ExpenseWithExplicitIsHouseholdExpense_OverridesCategoryDefault()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(
+            new Category("Mercado", CategoryType.Expense, householdId, defaultIsHouseholdExpense: true));
+        var request = new CreateTransactionRequest(
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null,
+            IsHouseholdExpense: false);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.False(body!.IsHouseholdExpense);
+    }
+
+    [Fact]
+    public async Task Create_Income_IsHouseholdExpenseStaysNullRegardlessOfCategoryDefault()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(new Category("Salário", CategoryType.Income, householdId));
+        var request = new CreateTransactionRequest(
+            account.Id, null, category.Id, TransactionType.Income, 1000m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PostAsJsonAsync(Route, request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.Null(body!.IsHouseholdExpense);
+    }
 }

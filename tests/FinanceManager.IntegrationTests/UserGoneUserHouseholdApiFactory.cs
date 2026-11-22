@@ -56,6 +56,10 @@ public class UserGoneUserHouseholdApiFactory : UserHouseholdApiFactory
             Guid userId, CancellationToken cancellationToken) =>
             inner.GetMembershipsAsync(userId, cancellationToken);
 
+        public Task<IReadOnlyList<HouseholdMemberInfo>> GetHouseholdMembersAsync(
+            Guid householdId, CancellationToken cancellationToken) =>
+            inner.GetHouseholdMembersAsync(householdId, cancellationToken);
+
         public Task<HouseholdRole?> GetMembershipRoleAsync(
             Guid userId, Guid householdId, CancellationToken cancellationToken) =>
             inner.GetMembershipRoleAsync(userId, householdId, cancellationToken);

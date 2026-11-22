@@ -46,6 +46,10 @@ internal sealed class ConfigurableFakeIdentityService : IIdentityService
         Guid userId, CancellationToken cancellationToken) =>
         Task.FromResult(Memberships);
 
+    public Task<IReadOnlyList<HouseholdMemberInfo>> GetHouseholdMembersAsync(
+        Guid householdId, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
     public Task<HouseholdRole?> GetMembershipRoleAsync(
         Guid userId, Guid householdId, CancellationToken cancellationToken) =>
         throw new NotSupportedException();

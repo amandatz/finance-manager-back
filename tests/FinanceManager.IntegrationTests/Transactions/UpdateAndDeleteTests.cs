@@ -148,6 +148,47 @@ public class UpdateAndDeleteTests : IDisposable
     }
 
     [Fact]
+    public async Task Update_WithoutIsHouseholdExpense_InheritsCategoryDefault()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(
+            new Category("Luz", CategoryType.Expense, householdId, defaultIsHouseholdExpense: true));
+        var transaction = await _factory.SeedTransactionAsync(new Transaction(
+            account.Id, category.Id, userId, TransactionType.Expense, 50m, "BRL",
+            new DateOnly(2026, 11, 16), householdId, isHouseholdExpense: false));
+        var request = new UpdateTransactionRequest(
+            category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{transaction.Id}", request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.True(body!.IsHouseholdExpense);
+    }
+
+    [Fact]
+    public async Task Update_WithExplicitIsHouseholdExpense_OverridesCategoryDefault()
+    {
+        var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
+        var account = await _factory.SeedAccountAsync(
+            new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
+        var category = await _factory.SeedCategoryAsync(
+            new Category("Mercado", CategoryType.Expense, householdId, defaultIsHouseholdExpense: true));
+        var transaction = await _factory.SeedTransactionAsync(new Transaction(
+            account.Id, category.Id, userId, TransactionType.Expense, 50m, "BRL",
+            new DateOnly(2026, 11, 16), householdId, isHouseholdExpense: true));
+        var request = new UpdateTransactionRequest(
+            category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null,
+            IsHouseholdExpense: false);
+
+        var response = await client.PutAsJsonAsync($"{Route}/{transaction.Id}", request);
+
+        var body = await response.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
+        Assert.False(body!.IsHouseholdExpense);
+    }
+
+    [Fact]
     public async Task Update_WithUnknownId_Returns404()
     {
         var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
