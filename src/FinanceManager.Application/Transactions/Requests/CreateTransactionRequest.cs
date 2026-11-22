@@ -3,7 +3,8 @@ using FinanceManager.Domain.Enums;
 namespace FinanceManager.Application.Transactions.Requests;
 
 public sealed record CreateTransactionRequest(
-    Guid FinancialAccountId,
+    Guid? FinancialAccountId,
+    Guid? CreditCardId,
     Guid CategoryId,
     TransactionType Type,
     decimal Amount,

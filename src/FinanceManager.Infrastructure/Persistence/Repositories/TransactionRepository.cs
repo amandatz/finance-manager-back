@@ -30,6 +30,11 @@ public sealed class TransactionRepository(
             query = query.Where(x => x.FinancialAccountId == financialAccountId);
         }
 
+        if (filter.CreditCardId is { } creditCardId)
+        {
+            query = query.Where(x => x.CreditCardId == creditCardId);
+        }
+
         if (filter.CategoryId is { } categoryId)
         {
             query = query.Where(x => x.CategoryId == categoryId);
@@ -62,6 +67,26 @@ public sealed class TransactionRepository(
             .SumAsync(
                 x => x.Type == TransactionType.Income ? x.Amount : -x.Amount,
                 cancellationToken);
+    }
+
+    public async Task<decimal> GetCreditCardDebtAsync(
+        Guid creditCardId,
+        CancellationToken cancellationToken)
+    {
+        return await context.Transactions
+            .Where(x => x.CreditCardId == creditCardId && x.IsActive)
+            .SumAsync(
+                x => x.Type == TransactionType.Expense ? x.Amount : -x.Amount,
+                cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Transaction>> GetBySettlementGroupIdAsync(
+        Guid settlementGroupId,
+        CancellationToken cancellationToken)
+    {
+        return await context.Transactions
+            .Where(x => x.SettlementGroupId == settlementGroupId)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddAsync(

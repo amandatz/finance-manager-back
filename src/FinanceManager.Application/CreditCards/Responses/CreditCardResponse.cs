@@ -8,6 +8,7 @@ public sealed record CreditCardResponse(
     int PaymentDueDay,
     Guid? SettlementAccountId,
     IReadOnlyCollection<Guid> OwnerUserIds,
+    decimal CurrentDebt,
     bool IsActive,
     DateTime CreatedAt,
     DateTime? UpdatedAt);

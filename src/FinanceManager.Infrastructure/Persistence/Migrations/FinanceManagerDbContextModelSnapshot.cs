@@ -226,13 +226,17 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("amount");
 
-                    b.Property<Guid>("CategoryId")
+                    b.Property<Guid?>("CategoryId")
                         .HasColumnType("uuid")
                         .HasColumnName("category_id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CreditCardId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("credit_card_id");
 
                     b.Property<string>("Currency")
                         .IsRequired()
@@ -249,7 +253,7 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(250)")
                         .HasColumnName("description");
 
-                    b.Property<Guid>("FinancialAccountId")
+                    b.Property<Guid?>("FinancialAccountId")
                         .HasColumnType("uuid")
                         .HasColumnName("financial_account_id");
 
@@ -269,6 +273,10 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("recorded_by_user_id");
 
+                    b.Property<Guid?>("SettlementGroupId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("settlement_group_id");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer")
                         .HasColumnName("type");
@@ -283,6 +291,9 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                     b.HasIndex("CategoryId")
                         .HasDatabaseName("ix_transactions_category_id");
 
+                    b.HasIndex("CreditCardId")
+                        .HasDatabaseName("ix_transactions_credit_card_id");
+
                     b.HasIndex("Date")
                         .HasDatabaseName("ix_transactions_date");
 
@@ -291,6 +302,9 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("HouseholdId")
                         .HasDatabaseName("ix_transactions_household_id");
+
+                    b.HasIndex("SettlementGroupId")
+                        .HasDatabaseName("ix_transactions_settlement_group_id");
 
                     b.ToTable("transactions", (string)null);
                 });
@@ -549,6 +563,21 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasName("pk_asp_net_user_tokens");
 
                     b.ToTable("asp_net_user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("FinanceManager.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("FinanceManager.Domain.Entities.CreditCard", null)
+                        .WithMany()
+                        .HasForeignKey("CreditCardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_transactions_credit_cards_credit_card_id");
+
+                    b.HasOne("FinanceManager.Domain.Entities.FinancialAccount", null)
+                        .WithMany()
+                        .HasForeignKey("FinancialAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_transactions_financial_accounts_financial_account_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
