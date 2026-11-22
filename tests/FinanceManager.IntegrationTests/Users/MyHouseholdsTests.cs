@@ -21,13 +21,7 @@ public class MyHouseholdsTests : IDisposable
         var ownerToken = await _factory.LoginAsOwnerAsync(client);
         var ownerClient = _factory.CreateAuthenticatedClient(ownerToken);
 
-        var secondOwnerClient = _factory.CreateClient();
-        var registerResponse = await secondOwnerClient.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new FinanceManager.Application.Users.Requests.RegisterRequest(
-                "Second Owner", "second-owner-myhh@test.local", "SecondOwnerPassword123", null, "Second Household"));
-        var tokens = await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
-        var authedSecondClient = _factory.CreateAuthenticatedClient(tokens!.AccessToken);
+        var (authedSecondClient, _, _) = await _factory.RegisterNewHouseholdOwnerAsync("Second Household");
         var invite = await (await authedSecondClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 

@@ -19,14 +19,7 @@ public class JoinHouseholdTests : IDisposable
 
     private async Task<(HttpClient OwnerClient, string InviteCode)> CreateSecondHouseholdAsync()
     {
-        var secondOwnerClient = _factory.CreateClient();
-        var registerResponse = await secondOwnerClient.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new RegisterRequest(
-                "Second Owner", $"second-owner-{Guid.NewGuid()}@test.local", "SecondOwnerPassword123", null,
-                "Second Household"));
-        var tokens = await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
-        var authedClient = _factory.CreateAuthenticatedClient(tokens!.AccessToken);
+        var (authedClient, _, _) = await _factory.RegisterNewHouseholdOwnerAsync("Second Household");
         var invite = await (await authedClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 
@@ -66,14 +59,7 @@ public class JoinHouseholdTests : IDisposable
 
         // The code was single-use and already consumed, so generate a fresh one for the
         // same household to isolate "already a member" from "code already consumed".
-        var secondOwnerClient = _factory.CreateClient();
-        var registerResponse = await secondOwnerClient.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new RegisterRequest(
-                "Third Owner", $"third-owner-{Guid.NewGuid()}@test.local", "ThirdOwnerPassword123", null,
-                "Third Household"));
-        var tokens = await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
-        var thirdOwnerClient = _factory.CreateAuthenticatedClient(tokens!.AccessToken);
+        var (thirdOwnerClient, _, _) = await _factory.RegisterNewHouseholdOwnerAsync("Third Household");
         var thirdInvite = await (await thirdOwnerClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 

@@ -104,14 +104,7 @@ public class LoginTests : IDisposable
         var firstMembershipHouseholdId = (await (await ownerClient.GetAsync("/api/v1/users/me"))
             .Content.ReadFromJsonAsync<CurrentUserResponse>(TestJsonOptions.Default))!.HouseholdId;
 
-        var secondOwnerClient = _factory.CreateClient();
-        var registerResponse = await secondOwnerClient.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new RegisterRequest(
-                "Second Owner", "second-owner-login@test.local", "SecondOwnerPassword123", null, "Second Household"));
-        var secondOwnerTokens = await registerResponse.Content
-            .ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
-        var authedSecondClient = _factory.CreateAuthenticatedClient(secondOwnerTokens!.AccessToken);
+        var (authedSecondClient, _, _) = await _factory.RegisterNewHouseholdOwnerAsync("Second Household");
         var invite = await (await authedSecondClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 
@@ -128,5 +121,39 @@ public class LoginTests : IDisposable
         Assert.Equal(
             firstMembershipHouseholdId.ToString(),
             token.Claims.First(c => c.Type == "household_id").Value);
+    }
+
+    [Fact]
+    public async Task Login_WithNoHousehold_SucceedsWithNullHouseholdIdAndNoScopedClaims()
+    {
+        var client = _factory.CreateClient();
+        const string email = "no-household-login@test.local";
+        const string password = "NoHouseholdPassword123";
+        await client.PostAsJsonAsync("/api/v1/auth/register", new RegisterRequest("No Household", email, password));
+
+        var response = await client.PostAsJsonAsync(Route, new LoginRequest(email, password));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        Assert.Null(body!.HouseholdId);
+
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(body.AccessToken);
+        Assert.DoesNotContain(token.Claims, c => c.Type == "household_id");
+        Assert.DoesNotContain(token.Claims, c => c.Type == ClaimTypes.Role);
+    }
+
+    [Fact]
+    public async Task Login_WithHousehold_ReturnsMatchingHouseholdIdInBody()
+    {
+        var client = _factory.CreateClient();
+        await _factory.EnsureOwnerRegisteredAsync(client);
+
+        var response = await client.PostAsJsonAsync(
+            Route,
+            new LoginRequest(UserHouseholdApiFactory.SeedOwnerEmail, UserHouseholdApiFactory.SeedOwnerPassword));
+
+        var body = await response.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        var token = new JwtSecurityTokenHandler().ReadJwtToken(body!.AccessToken);
+        Assert.Equal(body.HouseholdId.ToString(), token.Claims.First(c => c.Type == "household_id").Value);
     }
 }

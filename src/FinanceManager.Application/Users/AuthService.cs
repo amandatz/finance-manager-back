@@ -2,17 +2,12 @@ using System.Diagnostics;
 using FinanceManager.Application.Abstractions;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
-using FinanceManager.Domain.Entities;
-using FinanceManager.Domain.Enums;
 using FinanceManager.Domain.Exceptions;
-using FinanceManager.Domain.Repositories;
 
 namespace FinanceManager.Application.Users;
 
 public sealed class AuthService(
     IIdentityService identityService,
-    IHouseholdRepository householdRepository,
-    ICategoryRepository categoryRepository,
     IRefreshTokenService refreshTokenService)
 {
     public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
@@ -35,7 +30,7 @@ public sealed class AuthService(
             authenticated.Role,
             cancellationToken);
 
-        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken);
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, authenticated.HouseholdId);
     }
 
     public async Task<LoginResponse> RefreshAsync(RefreshRequest request, CancellationToken cancellationToken)
@@ -47,7 +42,7 @@ public sealed class AuthService(
             throw new AuthenticationFailedException("Invalid or expired refresh token.");
         }
 
-        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken);
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, tokens.HouseholdId);
     }
 
     public Task LogoutAsync(RefreshRequest request, CancellationToken cancellationToken) =>
@@ -61,44 +56,17 @@ public sealed class AuthService(
 
         var tokens = await refreshTokenService.IssueTokensAsync(userId, targetHouseholdId, role, cancellationToken);
 
-        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken);
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, tokens.HouseholdId);
     }
 
     public async Task<LoginResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
     {
-        Household household;
-        HouseholdRole role;
-
-        if (string.IsNullOrWhiteSpace(request.InviteCode))
-        {
-            // Household and its seed categories are only staged here (AddAsync, no save).
-            // CreateUserAsync's own SaveChangesAsync below is what actually commits them -
-            // together with the user and membership - in a single flush against the same
-            // scoped DbContext, so a failure there (e.g. duplicate email) leaves nothing
-            // persisted instead of orphaning the household and its categories.
-            household = new Household(request.HouseholdName!);
-            await householdRepository.AddAsync(household, cancellationToken);
-            role = HouseholdRole.Owner;
-
-            foreach (var category in CategorySeed.CreateDefaults(household.Id))
-            {
-                await categoryRepository.AddAsync(category, cancellationToken);
-            }
-        }
-        else
-        {
-            household = await householdRepository.GetByInviteCodeAsync(request.InviteCode, cancellationToken)
-                ?? throw new BusinessRuleViolationException(
-                    "The invite code is invalid or has already been used.");
-            role = HouseholdRole.Member;
-        }
-
         var result = await identityService.CreateUserAsync(
             request.Name,
             request.Email,
             request.Password,
-            household.Id,
-            role,
+            householdId: null,
+            role: null,
             cancellationToken);
 
         switch (result.Outcome)
@@ -115,20 +83,12 @@ public sealed class AuthService(
                 throw new UnreachableException($"Unhandled {nameof(CreateUserOutcome)}: {result.Outcome}");
         }
 
-        if (!string.IsNullOrWhiteSpace(request.InviteCode))
-        {
-            // Consume only after the user was actually created, so a failure above (e.g.
-            // duplicate email) never burns a valid code for an unrelated reason.
-            household.ConsumeInviteCode();
-            await householdRepository.SaveChangesAsync(cancellationToken);
-        }
-
         var tokens = await refreshTokenService.IssueTokensAsync(
             result.UserId!.Value,
-            household.Id,
-            role,
+            householdId: null,
+            role: null,
             cancellationToken);
 
-        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken);
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, tokens.HouseholdId);
     }
 }

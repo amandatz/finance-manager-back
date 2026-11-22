@@ -26,9 +26,8 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        // ConflictException (email already in use) and BusinessRuleViolationException
-        // (invalid invite code, or a rejected password) are caught by
-        // DomainExceptionHandler and mapped to 409/400 ProblemDetails responses.
+        // ConflictException (email already in use) is caught by DomainExceptionHandler
+        // and mapped to a 409 ProblemDetails response.
         var response = await authService.RegisterAsync(request, cancellationToken);
 
         return StatusCode(StatusCodes.Status201Created, response);

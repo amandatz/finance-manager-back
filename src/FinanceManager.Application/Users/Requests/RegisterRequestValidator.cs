@@ -1,4 +1,3 @@
-using FinanceManager.Domain.Entities;
 using FluentValidation;
 
 namespace FinanceManager.Application.Users.Requests;
@@ -18,10 +17,5 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
 
         RuleFor(x => x.Password)
             .NotEmpty();
-
-        RuleFor(x => x.HouseholdName)
-            .NotEmpty()
-            .MaximumLength(Household.NameMaxLength)
-            .When(x => string.IsNullOrWhiteSpace(x.InviteCode));
     }
 }

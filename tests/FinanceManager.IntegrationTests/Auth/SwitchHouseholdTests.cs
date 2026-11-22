@@ -29,14 +29,7 @@ public class SwitchHouseholdTests : IDisposable
         var invite = await (await ownerClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 
-        var secondHouseholdOwnerClient = _factory.CreateClient();
-        var secondOwnerLogin = await secondHouseholdOwnerClient.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new RegisterRequest(
-                "Second Owner", "second-owner-switch@test.local", "SecondOwnerPassword123", null, "Second Household"));
-        var secondOwnerTokens = await secondOwnerLogin.Content
-            .ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
-        var secondOwnerClient = _factory.CreateAuthenticatedClient(secondOwnerTokens!.AccessToken);
+        var (secondOwnerClient, _, _) = await _factory.RegisterNewHouseholdOwnerAsync("Second Household");
         var secondInvite = await (await secondOwnerClient.PostAsync("/api/v1/households/invite-code", null))
             .Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 

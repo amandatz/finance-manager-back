@@ -1,6 +1,9 @@
 using System.Net.Http.Json;
 using FinanceManager.Application.Categories.Responses;
+using FinanceManager.Application.Households.Requests;
+using FinanceManager.Application.Households.Responses;
 using FinanceManager.Application.Users.Requests;
+using FinanceManager.Application.Users.Responses;
 
 namespace FinanceManager.IntegrationTests.Categories;
 
@@ -13,15 +16,19 @@ public class DefaultSeedTests : IDisposable
     public void Dispose() => _factory.Dispose();
 
     [Fact]
-    public async Task NewHousehold_Registration_SeedsDefaultCategories()
+    public async Task NewHousehold_Creation_SeedsDefaultCategories()
     {
         var client = _factory.CreateClient();
         var registerResponse = await client.PostAsJsonAsync(
-            "/api/v1/auth/register",
-            new RegisterRequest("New Owner", "new-owner@test.local", "TestPassword123", null, "New Household"));
+            "/api/v1/auth/register", new RegisterRequest("New Owner", "new-owner@test.local", "TestPassword123"));
         registerResponse.EnsureSuccessStatusCode();
-        var tokens = await registerResponse.Content.ReadFromJsonAsync<FinanceManager.Application.Users.Responses.LoginResponse>(
-            TestJsonOptions.Default);
+        var registerTokens = await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+
+        var pendingClient = _factory.CreateAuthenticatedClient(registerTokens!.AccessToken);
+        var createHouseholdResponse = await pendingClient.PostAsJsonAsync(
+            "/api/v1/households", new CreateHouseholdRequest("New Household"));
+        createHouseholdResponse.EnsureSuccessStatusCode();
+        var tokens = await createHouseholdResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
 
         var authenticatedClient = _factory.CreateAuthenticatedClient(tokens!.AccessToken);
         var response = await authenticatedClient.GetAsync(Route);
@@ -45,13 +52,17 @@ public class DefaultSeedTests : IDisposable
             .ReadFromJsonAsync<List<CategoryResponse>>(TestJsonOptions.Default))!.Count;
 
         var inviteResponse = await authenticatedOwnerClient.PostAsync("/api/v1/households/invite-code", null);
-        var invite = await inviteResponse.Content.ReadFromJsonAsync<FinanceManager.Application.Households.Responses.InviteCodeResponse>(
-            TestJsonOptions.Default);
+        var invite = await inviteResponse.Content.ReadFromJsonAsync<InviteCodeResponse>(TestJsonOptions.Default);
 
         var joiningClient = _factory.CreateClient();
-        await joiningClient.PostAsJsonAsync(
+        var joiningRegisterResponse = await joiningClient.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new RegisterRequest("Joining Member", "joining-member@test.local", "TestPassword123", invite!.InviteCode, null));
+            new RegisterRequest("Joining Member", "joining-member@test.local", "TestPassword123"));
+        var joiningTokens = await joiningRegisterResponse.Content
+            .ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        var authenticatedJoiningClient = _factory.CreateAuthenticatedClient(joiningTokens!.AccessToken);
+        await authenticatedJoiningClient.PostAsJsonAsync(
+            "/api/v1/households/join", new JoinHouseholdRequest(invite!.InviteCode!));
 
         var categoriesAfterJoin = await authenticatedOwnerClient.GetAsync(Route);
         var countAfterJoin = (await categoriesAfterJoin.Content

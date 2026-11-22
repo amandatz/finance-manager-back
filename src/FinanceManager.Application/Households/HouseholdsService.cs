@@ -10,9 +10,32 @@ namespace FinanceManager.Application.Households;
 
 public sealed class HouseholdsService(
     IHouseholdRepository householdRepository,
+    ICategoryRepository categoryRepository,
     IIdentityService identityService,
     IRefreshTokenService refreshTokenService)
 {
+    public async Task<LoginResponse> CreateHouseholdAsync(
+        Guid userId, string householdName, CancellationToken cancellationToken)
+    {
+        // Household and its seed categories are only staged here (AddAsync, no save) -
+        // AddMembershipAsync's own SaveChangesAsync below is what actually commits them,
+        // together with the membership, in a single flush.
+        var household = new Household(householdName);
+        await householdRepository.AddAsync(household, cancellationToken);
+
+        foreach (var category in CategorySeed.CreateDefaults(household.Id))
+        {
+            await categoryRepository.AddAsync(category, cancellationToken);
+        }
+
+        await identityService.AddMembershipAsync(userId, household.Id, HouseholdRole.Owner, cancellationToken);
+
+        var tokens = await refreshTokenService.IssueTokensAsync(
+            userId, household.Id, HouseholdRole.Owner, cancellationToken);
+
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, tokens.HouseholdId);
+    }
+
     public async Task<InviteCodeResponse> GenerateInviteCodeAsync(
         Guid householdId,
         CancellationToken cancellationToken)
@@ -45,6 +68,6 @@ public sealed class HouseholdsService(
         var tokens = await refreshTokenService.IssueTokensAsync(
             userId, household.Id, HouseholdRole.Member, cancellationToken);
 
-        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken);
+        return new LoginResponse(tokens.AccessToken, tokens.RefreshToken, tokens.HouseholdId);
     }
 }
