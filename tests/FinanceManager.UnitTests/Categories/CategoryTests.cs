@@ -16,7 +16,16 @@ public class CategoryTests
         Assert.Equal("Alimentação", category.Name);
         Assert.Equal(CategoryType.Expense, category.Type);
         Assert.Equal(HouseholdId, category.HouseholdId);
+        Assert.False(category.DefaultIsHouseholdExpense);
         Assert.True(category.IsActive);
+    }
+
+    [Fact]
+    public void Constructor_WithDefaultIsHouseholdExpenseTrue_SetsIt()
+    {
+        var category = new Category("Moradia", CategoryType.Expense, HouseholdId, defaultIsHouseholdExpense: true);
+
+        Assert.True(category.DefaultIsHouseholdExpense);
     }
 
     [Fact]
@@ -50,9 +59,10 @@ public class CategoryTests
     {
         var category = new Category("Alimentação", CategoryType.Expense, HouseholdId);
 
-        category.Update("Mercado", CategoryType.Expense);
+        category.Update("Mercado", CategoryType.Expense, defaultIsHouseholdExpense: true);
 
         Assert.Equal("Mercado", category.Name);
+        Assert.True(category.DefaultIsHouseholdExpense);
         Assert.NotNull(category.UpdatedAt);
     }
 
@@ -61,7 +71,7 @@ public class CategoryTests
     {
         var category = new Category("Alimentação", CategoryType.Expense, HouseholdId);
 
-        var act = () => category.Update(string.Empty, CategoryType.Expense);
+        var act = () => category.Update(string.Empty, CategoryType.Expense, defaultIsHouseholdExpense: false);
 
         Assert.Throws<DomainValidationException>(act);
     }

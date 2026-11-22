@@ -17,6 +17,10 @@ internal sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.Property(x => x.HouseholdId)
             .IsRequired();
 
+        builder.Property(x => x.DefaultIsHouseholdExpense)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.HasIndex(x => x.HouseholdId);
     }
 }

@@ -148,6 +148,19 @@ public sealed class IdentityService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<HouseholdMemberInfo>> GetHouseholdMembersAsync(
+        Guid householdId, CancellationToken cancellationToken)
+    {
+        return await dbContext.HouseholdMemberships
+            .Where(m => m.HouseholdId == householdId)
+            .Join(
+                userManager.Users,
+                m => m.UserId,
+                u => u.Id,
+                (m, u) => new HouseholdMemberInfo(u.Id, u.Name))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<HouseholdRole?> GetMembershipRoleAsync(
         Guid userId, Guid householdId, CancellationToken cancellationToken)
     {

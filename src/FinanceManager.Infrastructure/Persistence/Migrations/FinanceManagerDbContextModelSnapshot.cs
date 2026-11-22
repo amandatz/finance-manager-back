@@ -34,6 +34,10 @@ namespace FinanceManager.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("DefaultIsHouseholdExpense")
+                        .HasColumnType("boolean")
+                        .HasColumnName("default_is_household_expense");
+
                     b.Property<Guid>("HouseholdId")
                         .HasColumnType("uuid")
                         .HasColumnName("household_id");

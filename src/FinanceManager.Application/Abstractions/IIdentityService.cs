@@ -29,6 +29,9 @@ public interface IIdentityService
 
     Task<IReadOnlyList<HouseholdMembershipInfo>> GetMembershipsAsync(Guid userId, CancellationToken cancellationToken);
 
+    Task<IReadOnlyList<HouseholdMemberInfo>> GetHouseholdMembersAsync(
+        Guid householdId, CancellationToken cancellationToken);
+
     Task<HouseholdRole?> GetMembershipRoleAsync(Guid userId, Guid householdId, CancellationToken cancellationToken);
 
     Task<AddMembershipResult> AddMembershipAsync(

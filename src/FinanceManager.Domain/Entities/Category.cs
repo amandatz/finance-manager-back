@@ -16,7 +16,7 @@ public sealed class Category : HouseholdScopedEntity
     {
     }
 
-    public Category(string name, CategoryType type, Guid householdId)
+    public Category(string name, CategoryType type, Guid householdId, bool defaultIsHouseholdExpense = false)
         : base(householdId)
     {
         ValidateName(name);
@@ -24,19 +24,28 @@ public sealed class Category : HouseholdScopedEntity
 
         Name = name;
         Type = type;
+        DefaultIsHouseholdExpense = defaultIsHouseholdExpense;
     }
 
     public string Name { get; private set; } = null!;
 
     public CategoryType Type { get; private set; }
 
-    public void Update(string name, CategoryType type)
+    /// <summary>
+    /// Only meaningful for <see cref="CategoryType.Expense"/> categories - income has no
+    /// household/personal distinction. Transactions that don't set <c>IsHouseholdExpense</c>
+    /// explicitly inherit this value from their category.
+    /// </summary>
+    public bool DefaultIsHouseholdExpense { get; private set; }
+
+    public void Update(string name, CategoryType type, bool defaultIsHouseholdExpense)
     {
         ValidateName(name);
         ValidateType(type);
 
         Name = name;
         Type = type;
+        DefaultIsHouseholdExpense = defaultIsHouseholdExpense;
         MarkAsUpdated();
     }
 

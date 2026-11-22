@@ -6,6 +6,7 @@ public sealed record CategoryResponse(
     Guid Id,
     string Name,
     CategoryType Type,
+    bool DefaultIsHouseholdExpense,
     bool IsActive,
     DateTime CreatedAt,
     DateTime? UpdatedAt);
