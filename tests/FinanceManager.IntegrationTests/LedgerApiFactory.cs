@@ -6,9 +6,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace FinanceManager.IntegrationTests;
 
 /// <summary>
-/// Combines household/auth test helpers with seeding for the ledger foundation entities
-/// (<see cref="Category"/>, <see cref="Transaction"/>, <see cref="FinancialAccount"/>) -
-/// seeding always goes straight through the DbContext, never through the filtered repository.
+/// Combines household/auth test helpers with seeding for the ledger entities
+/// (<see cref="Category"/>, <see cref="Transaction"/>, <see cref="FinancialAccount"/>,
+/// <see cref="CreditCard"/>) - seeding always goes straight through the DbContext, never
+/// through the filtered repository.
 /// </summary>
 public class LedgerApiFactory : UserHouseholdApiFactory
 {
@@ -59,5 +60,24 @@ public class LedgerApiFactory : UserHouseholdApiFactory
         var db = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
 
         return await db.Transactions.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
+    }
+
+    public async Task<CreditCard> SeedCreditCardAsync(CreditCard creditCard)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
+
+        db.CreditCards.Add(creditCard);
+        await db.SaveChangesAsync();
+
+        return creditCard;
+    }
+
+    public async Task<CreditCard?> FindCreditCardAsync(Guid id)
+    {
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
+
+        return await db.CreditCards.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
     }
 }

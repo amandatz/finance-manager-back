@@ -10,6 +10,7 @@ namespace FinanceManager.Application.Transactions;
 public sealed class TransactionsService(
     ITransactionRepository repository,
     IFinancialAccountRepository financialAccountRepository,
+    ICreditCardRepository creditCardRepository,
     ICategoryRepository categoryRepository)
 {
     public async Task<TransactionResponse> CreateAsync(
@@ -18,21 +19,43 @@ public sealed class TransactionsService(
         Guid recordedByUserId,
         CancellationToken cancellationToken)
     {
-        await EnsureAccountExistsAsync(request.FinancialAccountId, cancellationToken);
         var category = await GetActiveCategoryOrThrowAsync(request.CategoryId, cancellationToken);
         EnsureTypeMatchesCategory(request.Type, category);
 
-        var transaction = new Transaction(
-            request.FinancialAccountId,
-            request.CategoryId,
-            recordedByUserId,
-            request.Type,
-            request.Amount,
-            request.Currency,
-            request.Date,
-            householdId,
-            request.Description,
-            request.IsHouseholdExpense);
+        Transaction transaction;
+
+        if (request.CreditCardId is { } creditCardId)
+        {
+            await EnsureCreditCardExistsAsync(creditCardId, cancellationToken);
+
+            transaction = Transaction.ForCreditCard(
+                creditCardId,
+                request.CategoryId,
+                recordedByUserId,
+                request.Type,
+                request.Amount,
+                request.Currency,
+                request.Date,
+                householdId,
+                request.Description,
+                request.IsHouseholdExpense);
+        }
+        else
+        {
+            await EnsureAccountExistsAsync(request.FinancialAccountId!.Value, cancellationToken);
+
+            transaction = new Transaction(
+                request.FinancialAccountId.Value,
+                request.CategoryId,
+                recordedByUserId,
+                request.Type,
+                request.Amount,
+                request.Currency,
+                request.Date,
+                householdId,
+                request.Description,
+                request.IsHouseholdExpense);
+        }
 
         await repository.AddAsync(transaction, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -89,6 +112,13 @@ public sealed class TransactionsService(
     {
         var transaction = await GetActiveOrThrowAsync(id, cancellationToken);
 
+        if (transaction.IsSettlementLeg)
+        {
+            throw new BusinessRuleViolationException(
+                "A settlement leg cannot be archived on its own - archive the whole payment via " +
+                "DELETE /credit-cards/{id}/payments/{settlementGroupId}.");
+        }
+
         transaction.Deactivate();
         await repository.SaveChangesAsync(cancellationToken);
     }
@@ -109,6 +139,16 @@ public sealed class TransactionsService(
         if (account is not { IsActive: true })
         {
             throw NotFoundException.For(nameof(FinancialAccount), financialAccountId);
+        }
+    }
+
+    private async Task EnsureCreditCardExistsAsync(Guid creditCardId, CancellationToken cancellationToken)
+    {
+        var creditCard = await creditCardRepository.GetByIdAsync(creditCardId, cancellationToken);
+
+        if (creditCard is not { IsActive: true })
+        {
+            throw NotFoundException.For(nameof(CreditCard), creditCardId);
         }
     }
 
@@ -135,19 +175,5 @@ public sealed class TransactionsService(
         }
     }
 
-    private static TransactionResponse Map(Transaction transaction) =>
-        new(
-            transaction.Id,
-            transaction.FinancialAccountId,
-            transaction.CategoryId,
-            transaction.RecordedByUserId,
-            transaction.Type,
-            transaction.Amount,
-            transaction.Currency,
-            transaction.Date,
-            transaction.Description,
-            transaction.IsHouseholdExpense,
-            transaction.IsActive,
-            transaction.CreatedAt,
-            transaction.UpdatedAt);
+    private static TransactionResponse Map(Transaction transaction) => TransactionMapper.Map(transaction);
 }

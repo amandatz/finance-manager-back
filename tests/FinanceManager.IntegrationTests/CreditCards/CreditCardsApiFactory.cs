@@ -1,28 +1,8 @@
-using FinanceManager.Domain.Entities;
-using FinanceManager.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace FinanceManager.IntegrationTests.CreditCards;
 
-public class CreditCardsApiFactory : UserHouseholdApiFactory
-{
-    public async Task<CreditCard> SeedCreditCardAsync(CreditCard creditCard)
-    {
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
-
-        db.CreditCards.Add(creditCard);
-        await db.SaveChangesAsync();
-
-        return creditCard;
-    }
-
-    public async Task<CreditCard?> FindCreditCardAsync(Guid id)
-    {
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<FinanceManagerDbContext>();
-
-        return await db.CreditCards.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == id);
-    }
-}
+/// <summary>
+/// CreditCard tests need accounts, categories, and transactions too (e.g. bill payments link a
+/// CreditCard to a FinancialAccount via settlement transactions), so this reuses every seed
+/// helper <see cref="LedgerApiFactory"/> already has rather than duplicating them.
+/// </summary>
+public class CreditCardsApiFactory : LedgerApiFactory;

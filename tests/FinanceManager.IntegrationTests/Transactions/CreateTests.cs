@@ -50,7 +50,7 @@ public class CreateTests : IDisposable
     {
         var client = _factory.CreateClient();
         var request = new CreateTransactionRequest(
-            Guid.NewGuid(), Guid.NewGuid(), TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            Guid.NewGuid(), null, Guid.NewGuid(), TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -65,7 +65,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), "Supermercado", null);
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), "Supermercado", null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -91,7 +91,7 @@ public class CreateTests : IDisposable
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var memberClient = await AddHouseholdMemberAsync(ownerClient);
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await memberClient.PostAsJsonAsync(Route, request);
 
@@ -108,7 +108,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 0m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 0m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -125,7 +125,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, -10m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, -10m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -140,7 +140,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 10.10m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 10.10m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -157,7 +157,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 10.126m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 10.126m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -174,7 +174,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 50m, "USD", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "USD", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -191,7 +191,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), new string('a', 251), null);
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), new string('a', 251), null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -206,7 +206,7 @@ public class CreateTests : IDisposable
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var incomeCategory = await _factory.SeedCategoryAsync(new Category("Salário", CategoryType.Income, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, incomeCategory.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, incomeCategory.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -219,7 +219,7 @@ public class CreateTests : IDisposable
         var (client, userId, householdId) = await CreateAuthenticatedOwnerAsync();
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            Guid.NewGuid(), category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            Guid.NewGuid(), null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -235,7 +235,7 @@ public class CreateTests : IDisposable
         await _factory.SeedAccountAsync(account);
         var category = await _factory.SeedCategoryAsync(new Category("Alimentação", CategoryType.Expense, householdId));
         var request = new CreateTransactionRequest(
-            account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 
@@ -249,7 +249,7 @@ public class CreateTests : IDisposable
         var account = await _factory.SeedAccountAsync(
             new FinancialAccount("Checking", FinancialAccountType.Bank, householdId, userId));
         var request = new CreateTransactionRequest(
-            account.Id, Guid.NewGuid(), TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
+            account.Id, null, Guid.NewGuid(), TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null);
 
         var response = await client.PostAsJsonAsync(Route, request);
 

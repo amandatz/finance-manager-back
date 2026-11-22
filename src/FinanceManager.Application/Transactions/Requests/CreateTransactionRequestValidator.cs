@@ -7,8 +7,9 @@ public sealed class CreateTransactionRequestValidator : AbstractValidator<Create
 {
     public CreateTransactionRequestValidator()
     {
-        RuleFor(x => x.FinancialAccountId)
-            .NotEmpty();
+        RuleFor(x => x)
+            .Must(x => x.FinancialAccountId.HasValue ^ x.CreditCardId.HasValue)
+            .WithMessage("Inform exactly one of FinancialAccountId or CreditCardId.");
 
         RuleFor(x => x.CategoryId)
             .NotEmpty();

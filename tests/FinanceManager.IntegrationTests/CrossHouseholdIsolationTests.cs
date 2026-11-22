@@ -4,6 +4,7 @@ using FinanceManager.Application.CreditCards.Requests;
 using FinanceManager.Application.CreditCards.Responses;
 using FinanceManager.Application.FinancialAccounts.Requests;
 using FinanceManager.Application.FinancialAccounts.Responses;
+using FinanceManager.Domain.Entities;
 using FinanceManager.Domain.Enums;
 
 namespace FinanceManager.IntegrationTests;
@@ -26,7 +27,7 @@ public class CrossHouseholdIsolationTests : IDisposable
     private const string AccountsRoute = "/api/v1/financial-accounts";
     private const string CreditCardsRoute = "/api/v1/credit-cards";
 
-    private readonly UserHouseholdApiFactory _factory = new();
+    private readonly LedgerApiFactory _factory = new();
 
     public void Dispose() => _factory.Dispose();
 
@@ -189,5 +190,59 @@ public class CrossHouseholdIsolationTests : IDisposable
 
         Assert.Single(fetched!.OwnerUserIds);
         Assert.Contains(userId, fetched.OwnerUserIds);
+    }
+
+    // --- CreditCard bill payments (019) ---
+
+    [Fact]
+    public async Task CreatePayment_AgainstAnotherHouseholdsCreditCard_Returns404()
+    {
+        var (householdAClient, aUserId, aHouseholdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var (_, bOwnerId, bHouseholdId) = await _factory.RegisterNewHouseholdOwnerAsync("Household B");
+        var cardB = await _factory.SeedCreditCardAsync(
+            new CreditCard(bHouseholdId, bOwnerId, 1000m, 10, 20));
+        var accountA = await _factory.SeedAccountAsync(
+            new FinancialAccount("Household A Checking", FinancialAccountType.Bank, aHouseholdId, aUserId));
+
+        var response = await householdAClient.PostAsJsonAsync(
+            $"{CreditCardsRoute}/{cardB.Id}/payments",
+            new CreateCreditCardPaymentRequest(accountA.Id, 100m, new DateOnly(2026, 11, 20), null));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePayment_FromAnotherHouseholdsAccount_Returns404()
+    {
+        var (householdAClient, aUserId, aHouseholdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var (_, bOwnerId, bHouseholdId) = await _factory.RegisterNewHouseholdOwnerAsync("Household B");
+        var cardA = await _factory.SeedCreditCardAsync(
+            new CreditCard(aHouseholdId, aUserId, 1000m, 10, 20));
+        var accountB = await _factory.SeedAccountAsync(
+            new FinancialAccount("Household B Checking", FinancialAccountType.Bank, bHouseholdId, bOwnerId));
+
+        var response = await householdAClient.PostAsJsonAsync(
+            $"{CreditCardsRoute}/{cardA.Id}/payments",
+            new CreateCreditCardPaymentRequest(accountB.Id, 100m, new DateOnly(2026, 11, 20), null));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CurrentDebt_NeverReflectsAnotherHouseholdsTransactions()
+    {
+        var (householdAClient, aUserId, aHouseholdId) = await _factory.CreateAuthenticatedOwnerAsync();
+        var (householdBClient, bUserId, bHouseholdId) = await _factory.RegisterNewHouseholdOwnerAsync("Household B");
+        var cardA = await _factory.SeedCreditCardAsync(new CreditCard(aHouseholdId, aUserId, 1000m, 10, 20));
+        var categoryB = await _factory.SeedCategoryAsync(new Category("Household B Category", CategoryType.Expense, bHouseholdId));
+        var cardB = await _factory.SeedCreditCardAsync(new CreditCard(bHouseholdId, bUserId, 1000m, 10, 20));
+        await _factory.SeedTransactionAsync(Transaction.ForCreditCard(
+            cardB.Id, categoryB.Id, bUserId, TransactionType.Expense, 500m, "BRL",
+            new DateOnly(2026, 11, 1), bHouseholdId));
+
+        var response = await householdAClient.GetAsync($"{CreditCardsRoute}/{cardA.Id}");
+        var body = await response.Content.ReadFromJsonAsync<CreditCardResponse>(TestJsonOptions.Default);
+
+        Assert.Equal(0m, body!.CurrentDebt);
     }
 }

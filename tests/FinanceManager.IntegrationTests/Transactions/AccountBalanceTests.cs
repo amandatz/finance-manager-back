@@ -59,7 +59,7 @@ public class AccountBalanceTests : IDisposable
         await client.PostAsJsonAsync(
             TransactionsRoute,
             new CreateTransactionRequest(
-                account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
+                account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
 
         var balance = await GetBalanceAsync(client, account.Id);
 
@@ -77,7 +77,7 @@ public class AccountBalanceTests : IDisposable
         await client.PostAsJsonAsync(
             TransactionsRoute,
             new CreateTransactionRequest(
-                account.Id, category.Id, TransactionType.Income, 1000m, "BRL", new DateOnly(2026, 11, 16), null, null));
+                account.Id, null, category.Id, TransactionType.Income, 1000m, "BRL", new DateOnly(2026, 11, 16), null, null));
 
         var balance = await GetBalanceAsync(client, account.Id);
 
@@ -94,7 +94,7 @@ public class AccountBalanceTests : IDisposable
         var createResponse = await client.PostAsJsonAsync(
             TransactionsRoute,
             new CreateTransactionRequest(
-                account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
+                account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
         var created = await createResponse.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
 
         await client.PutAsJsonAsync(
@@ -117,7 +117,7 @@ public class AccountBalanceTests : IDisposable
         var createResponse = await client.PostAsJsonAsync(
             TransactionsRoute,
             new CreateTransactionRequest(
-                account.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
+                account.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
         var created = await createResponse.Content.ReadFromJsonAsync<TransactionResponse>(TestJsonOptions.Default);
 
         await client.DeleteAsync($"{TransactionsRoute}/{created!.Id}");
@@ -140,7 +140,7 @@ public class AccountBalanceTests : IDisposable
         await client.PostAsJsonAsync(
             TransactionsRoute,
             new CreateTransactionRequest(
-                account1.Id, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
+                account1.Id, null, category.Id, TransactionType.Expense, 50m, "BRL", new DateOnly(2026, 11, 16), null, null));
 
         var balance1 = await GetBalanceAsync(client, account1.Id);
         var balance2 = await GetBalanceAsync(client, account2.Id);

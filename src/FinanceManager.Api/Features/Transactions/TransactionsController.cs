@@ -31,13 +31,14 @@ public sealed class TransactionsController(
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<TransactionResponse>>> GetAll(
         [FromQuery] Guid? accountId,
+        [FromQuery] Guid? creditCardId,
         [FromQuery] Guid? categoryId,
         [FromQuery] TransactionType? type,
         [FromQuery] DateOnly? dateFrom,
         [FromQuery] DateOnly? dateTo,
         CancellationToken cancellationToken)
     {
-        var filter = new TransactionFilter(accountId, categoryId, type, dateFrom, dateTo);
+        var filter = new TransactionFilter(accountId, creditCardId, categoryId, type, dateFrom, dateTo);
 
         return Ok(await service.GetAllAsync(filter, cancellationToken));
     }

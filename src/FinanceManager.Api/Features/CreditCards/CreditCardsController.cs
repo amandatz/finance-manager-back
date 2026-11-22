@@ -63,5 +63,28 @@ public sealed class CreditCardsController(
         return NoContent();
     }
 
+    [HttpPost("{id:guid}/payments")]
+    public async Task<ActionResult<CreditCardPaymentResponse>> CreatePayment(
+        Guid id,
+        CreateCreditCardPaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await service.CreatePaymentAsync(
+            id, request, currentHouseholdAccessor.HouseholdId, GetUserId(), cancellationToken);
+
+        return Created(string.Empty, response);
+    }
+
+    [HttpDelete("{id:guid}/payments/{settlementGroupId:guid}")]
+    public async Task<IActionResult> ArchivePayment(
+        Guid id,
+        Guid settlementGroupId,
+        CancellationToken cancellationToken)
+    {
+        await service.ArchivePaymentAsync(id, settlementGroupId, cancellationToken);
+
+        return NoContent();
+    }
+
     private Guid GetUserId() => Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }

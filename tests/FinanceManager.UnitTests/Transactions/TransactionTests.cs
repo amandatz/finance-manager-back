@@ -143,4 +143,80 @@ public class TransactionTests
         Assert.False(transaction.IsActive);
         Assert.NotNull(transaction.UpdatedAt);
     }
+
+    [Fact]
+    public void Constructor_WithFinancialAccountId_SetsCreditCardIdNull()
+    {
+        var transaction = CreateValidTransaction();
+
+        Assert.Equal(FinancialAccountId, transaction.FinancialAccountId);
+        Assert.Null(transaction.CreditCardId);
+        Assert.Null(transaction.SettlementGroupId);
+        Assert.False(transaction.IsSettlementLeg);
+    }
+
+    [Fact]
+    public void ForCreditCard_WithValidData_SetsCreditCardIdAndNoFinancialAccountId()
+    {
+        var creditCardId = Guid.NewGuid();
+
+        var transaction = Transaction.ForCreditCard(
+            creditCardId,
+            CategoryId,
+            RecordedByUserId,
+            TransactionType.Expense,
+            150m,
+            "BRL",
+            Date,
+            HouseholdId);
+
+        Assert.Equal(creditCardId, transaction.CreditCardId);
+        Assert.Null(transaction.FinancialAccountId);
+        Assert.Equal(CategoryId, transaction.CategoryId);
+        Assert.Null(transaction.SettlementGroupId);
+    }
+
+    [Fact]
+    public void CreateAccountSettlementLeg_SetsExpenseTypeAndNoCategory()
+    {
+        var settlementGroupId = Guid.NewGuid();
+
+        var leg = Transaction.CreateAccountSettlementLeg(
+            FinancialAccountId, RecordedByUserId, 500m, "BRL", Date, HouseholdId, settlementGroupId);
+
+        Assert.Equal(FinancialAccountId, leg.FinancialAccountId);
+        Assert.Null(leg.CreditCardId);
+        Assert.Null(leg.CategoryId);
+        Assert.Equal(TransactionType.Expense, leg.Type);
+        Assert.Equal(settlementGroupId, leg.SettlementGroupId);
+        Assert.True(leg.IsSettlementLeg);
+    }
+
+    [Fact]
+    public void CreateCreditCardSettlementLeg_SetsIncomeTypeAndNoCategory()
+    {
+        var creditCardId = Guid.NewGuid();
+        var settlementGroupId = Guid.NewGuid();
+
+        var leg = Transaction.CreateCreditCardSettlementLeg(
+            creditCardId, RecordedByUserId, 500m, "BRL", Date, HouseholdId, settlementGroupId);
+
+        Assert.Equal(creditCardId, leg.CreditCardId);
+        Assert.Null(leg.FinancialAccountId);
+        Assert.Null(leg.CategoryId);
+        Assert.Equal(TransactionType.Income, leg.Type);
+        Assert.Equal(settlementGroupId, leg.SettlementGroupId);
+        Assert.True(leg.IsSettlementLeg);
+    }
+
+    [Fact]
+    public void Update_OnSettlementLeg_ThrowsBusinessRuleViolationException()
+    {
+        var leg = Transaction.CreateAccountSettlementLeg(
+            FinancialAccountId, RecordedByUserId, 500m, "BRL", Date, HouseholdId, Guid.NewGuid());
+
+        var act = () => leg.Update(CategoryId, TransactionType.Expense, 500m, "BRL", Date, null, null);
+
+        Assert.Throws<BusinessRuleViolationException>(act);
+    }
 }
