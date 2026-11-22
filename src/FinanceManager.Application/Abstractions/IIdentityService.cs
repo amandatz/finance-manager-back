@@ -10,8 +10,8 @@ public interface IIdentityService
         string name,
         string email,
         string password,
-        Guid householdId,
-        HouseholdRole role,
+        Guid? householdId,
+        HouseholdRole? role,
         CancellationToken cancellationToken);
 
     Task<AuthenticatedUser?> ValidateCredentialsAsync(

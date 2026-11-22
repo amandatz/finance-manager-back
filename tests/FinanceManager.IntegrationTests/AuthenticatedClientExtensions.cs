@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using FinanceManager.Application.Households.Requests;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
 
@@ -38,10 +39,16 @@ public static class AuthenticatedClientExtensions
 
         var registerResponse = await registerClient.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new RegisterRequest("Other Owner", email, password, null, householdName));
+            new RegisterRequest("Other Owner", email, password));
         registerResponse.EnsureSuccessStatusCode();
 
-        var tokens = (await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default))!;
+        var registerTokens = (await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default))!;
+        var pendingClient = factory.CreateAuthenticatedClient(registerTokens.AccessToken);
+        var createHouseholdResponse = await pendingClient.PostAsJsonAsync(
+            "/api/v1/households", new CreateHouseholdRequest(householdName));
+        createHouseholdResponse.EnsureSuccessStatusCode();
+
+        var tokens = (await createHouseholdResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default))!;
 
         return ToClientAndClaims(factory, tokens);
     }

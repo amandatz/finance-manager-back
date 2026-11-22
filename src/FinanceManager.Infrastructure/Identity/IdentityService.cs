@@ -19,8 +19,8 @@ public sealed class IdentityService(
         string name,
         string email,
         string password,
-        Guid householdId,
-        HouseholdRole role,
+        Guid? householdId,
+        HouseholdRole? role,
         CancellationToken cancellationToken)
     {
         var existing = await userManager.FindByEmailAsync(email);
@@ -50,15 +50,18 @@ public sealed class IdentityService(
                 errors);
         }
 
-        dbContext.HouseholdMemberships.Add(new HouseholdMembership
+        if (householdId is not null)
         {
-            Id = Guid.NewGuid(),
-            UserId = user.Id,
-            HouseholdId = householdId,
-            Role = role,
-            CreatedAt = DateTime.UtcNow,
-        });
-        await dbContext.SaveChangesAsync(cancellationToken);
+            dbContext.HouseholdMemberships.Add(new HouseholdMembership
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                HouseholdId = householdId.Value,
+                Role = role!.Value,
+                CreatedAt = DateTime.UtcNow,
+            });
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return new CreateUserResult(CreateUserOutcome.Success, user.Id, []);
     }
@@ -82,20 +85,13 @@ public sealed class IdentityService(
 
         // A user with more than one household membership activates the earliest-created one
         // by default, since there is currently no explicit "active household" selection step
-        // at login.
+        // at login. A user with none authenticates into a pending, household-less session.
         var membership = await dbContext.HouseholdMemberships
             .Where(m => m.UserId == user.Id)
             .OrderBy(m => m.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (membership is null)
-        {
-            // Defensive: every user is created with at least one membership. Treated the
-            // same as invalid credentials rather than a distinct error.
-            return null;
-        }
-
-        return new AuthenticatedUser(user.Id, membership.HouseholdId, membership.Role);
+        return new AuthenticatedUser(user.Id, membership?.HouseholdId, membership?.Role);
     }
 
     public async Task<UserProfile?> GetUserAsync(Guid userId, Guid householdId, CancellationToken cancellationToken)

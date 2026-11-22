@@ -31,8 +31,8 @@ public class ThrowingUserHouseholdApiFactory : UserHouseholdApiFactory
             string name,
             string email,
             string password,
-            Guid householdId,
-            HouseholdRole role,
+            Guid? householdId,
+            HouseholdRole? role,
             CancellationToken cancellationToken) =>
             inner.CreateUserAsync(name, email, password, householdId, role, cancellationToken);
 

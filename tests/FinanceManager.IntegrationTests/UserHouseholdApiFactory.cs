@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using FinanceManager.Application.Abstractions;
+using FinanceManager.Application.Households.Requests;
 using FinanceManager.Application.Users.Requests;
 using FinanceManager.Application.Users.Responses;
 using FinanceManager.Infrastructure.Identity;
@@ -71,11 +72,17 @@ public class UserHouseholdApiFactory : InMemoryDbApiFactory
             return;
         }
 
-        var response = await client.PostAsJsonAsync(
+        var registerResponse = await client.PostAsJsonAsync(
             "/api/v1/auth/register",
-            new RegisterRequest(SeedOwnerName, SeedOwnerEmail, SeedOwnerPassword, null, SeedHouseholdName));
+            new RegisterRequest(SeedOwnerName, SeedOwnerEmail, SeedOwnerPassword));
+        registerResponse.EnsureSuccessStatusCode();
 
-        response.EnsureSuccessStatusCode();
+        var tokens = await registerResponse.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        var authedClient = CreateAuthenticatedClient(tokens!.AccessToken);
+        var createHouseholdResponse = await authedClient.PostAsJsonAsync(
+            "/api/v1/households", new CreateHouseholdRequest(SeedHouseholdName));
+
+        createHouseholdResponse.EnsureSuccessStatusCode();
         _ownerRegistered = true;
     }
 

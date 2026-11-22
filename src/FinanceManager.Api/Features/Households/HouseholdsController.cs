@@ -17,6 +17,14 @@ public sealed class HouseholdsController(
     HouseholdsService householdsService,
     ICurrentHouseholdAccessor currentHouseholdAccessor) : ControllerBase
 {
+    [HttpPost]
+    public async Task<ActionResult<LoginResponse>> Create(
+        CreateHouseholdRequest request,
+        CancellationToken cancellationToken)
+    {
+        return Ok(await householdsService.CreateHouseholdAsync(GetUserId(), request.HouseholdName, cancellationToken));
+    }
+
     [HttpPost("invite-code")]
     [Authorize(Roles = nameof(HouseholdRole.Owner))]
     public async Task<ActionResult<InviteCodeResponse>> GenerateInviteCode(CancellationToken cancellationToken)
