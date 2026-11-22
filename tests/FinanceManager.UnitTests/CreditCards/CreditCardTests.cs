@@ -1,4 +1,5 @@
 using FinanceManager.Domain.Entities;
+using FinanceManager.Domain.Enums;
 using FinanceManager.Domain.Exceptions;
 
 namespace FinanceManager.UnitTests.CreditCards;
@@ -19,6 +20,36 @@ public class CreditCardTests
         Assert.Equal("Visa", card.Brand);
         Assert.True(card.IsOwnedBy(OwnerUserId));
         Assert.Equal(HouseholdId, card.HouseholdId);
+    }
+
+    [Fact]
+    public void Constructor_WithoutColor_DefaultsToGraphite()
+    {
+        var card = new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, "Visa");
+
+        Assert.Equal(CreditCardColor.Graphite, card.Color);
+    }
+
+    [Theory]
+    [InlineData(CreditCardColor.Graphite)]
+    [InlineData(CreditCardColor.Violet)]
+    [InlineData(CreditCardColor.Teal)]
+    [InlineData(CreditCardColor.Sapphire)]
+    [InlineData(CreditCardColor.Emerald)]
+    [InlineData(CreditCardColor.Rose)]
+    public void Constructor_WithEachValidColor_Succeeds(CreditCardColor color)
+    {
+        var card = new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, "Visa", color: color);
+
+        Assert.Equal(color, card.Color);
+    }
+
+    [Fact]
+    public void Constructor_WithUndefinedColor_ThrowsDomainValidationException()
+    {
+        var act = () => new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, color: (CreditCardColor)99);
+
+        Assert.Throws<DomainValidationException>(act);
     }
 
     [Fact]
@@ -80,13 +111,34 @@ public class CreditCardTests
     {
         var card = new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, "Visa");
 
-        card.Update(2000m, 5, 15, "Mastercard", null);
+        card.Update(2000m, 5, 15, "Mastercard", null, CreditCardColor.Violet);
 
         Assert.Equal(2000m, card.CreditLimit);
         Assert.Equal(5, card.StatementClosingDay);
         Assert.Equal(15, card.PaymentDueDay);
         Assert.Equal("Mastercard", card.Brand);
+        Assert.Equal(CreditCardColor.Violet, card.Color);
         Assert.NotNull(card.UpdatedAt);
+    }
+
+    [Fact]
+    public void Update_WithoutColor_DefaultsToGraphite()
+    {
+        var card = new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, "Visa", color: CreditCardColor.Rose);
+
+        card.Update(2000m, 5, 15, "Mastercard", null);
+
+        Assert.Equal(CreditCardColor.Graphite, card.Color);
+    }
+
+    [Fact]
+    public void Update_WithUndefinedColor_ThrowsDomainValidationException()
+    {
+        var card = new CreditCard(HouseholdId, OwnerUserId, 1000m, 10, 20, "Visa");
+
+        var act = () => card.Update(2000m, 5, 15, "Mastercard", null, (CreditCardColor)99);
+
+        Assert.Throws<DomainValidationException>(act);
     }
 
     [Fact]

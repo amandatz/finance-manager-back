@@ -1,3 +1,5 @@
+using FinanceManager.Domain.Enums;
+
 namespace FinanceManager.Application.CreditCards.Responses;
 
 public sealed record CreditCardResponse(
@@ -7,6 +9,7 @@ public sealed record CreditCardResponse(
     int StatementClosingDay,
     int PaymentDueDay,
     Guid? SettlementAccountId,
+    CreditCardColor Color,
     IReadOnlyCollection<Guid> OwnerUserIds,
     decimal CurrentDebt,
     bool IsActive,

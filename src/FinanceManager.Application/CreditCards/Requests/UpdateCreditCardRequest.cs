@@ -1,3 +1,5 @@
+using FinanceManager.Domain.Enums;
+
 namespace FinanceManager.Application.CreditCards.Requests;
 
 public sealed record UpdateCreditCardRequest(
@@ -5,4 +7,5 @@ public sealed record UpdateCreditCardRequest(
     int StatementClosingDay,
     int PaymentDueDay,
     string? Brand,
-    Guid? SettlementAccountId);
+    Guid? SettlementAccountId,
+    CreditCardColor Color = CreditCardColor.Graphite);

@@ -27,7 +27,8 @@ public sealed class CreditCardsService(
             request.StatementClosingDay,
             request.PaymentDueDay,
             request.Brand,
-            request.SettlementAccountId);
+            request.SettlementAccountId,
+            request.Color);
 
         await repository.AddAsync(creditCard, cancellationToken);
         await repository.SaveChangesAsync(cancellationToken);
@@ -79,7 +80,8 @@ public sealed class CreditCardsService(
             request.StatementClosingDay,
             request.PaymentDueDay,
             request.Brand,
-            request.SettlementAccountId);
+            request.SettlementAccountId,
+            request.Color);
 
         await repository.SaveChangesAsync(cancellationToken);
 
@@ -227,6 +229,7 @@ public sealed class CreditCardsService(
             creditCard.StatementClosingDay,
             creditCard.PaymentDueDay,
             creditCard.SettlementAccountId,
+            creditCard.Color,
             creditCard.OwnerUserIds,
             currentDebt,
             creditCard.IsActive,
